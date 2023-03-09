@@ -11,9 +11,11 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 
-void app_main(void)
+//WILL NOT RUN BY DEFAULT, TEST MAIN for TESTS!!!!!!!!!!!
+void app_main_final(void)
 {
     //This is the actaul main for the project.
     //Rename this function will testing another main, and dont delete other stuff here
     //This should have setup for board and task creation
+
 }
