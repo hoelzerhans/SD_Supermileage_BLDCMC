@@ -6,7 +6,7 @@
 #include "itf_seven_seg.h"
 #include "itf_sd_card_writer.h"
 //#include "com_funcs.h"
-
+//New Comment
 #ifndef ITF_COM_DEFINES
     #define ITF_TX_PIN_UART1 4
     #define ITF_RX_PIN_UART1 5
