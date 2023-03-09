@@ -193,6 +193,11 @@ int itf_actOnMessage(int message,int source){
             //unlock/lock and set dir
             break;
         case 4: //Req temp
+            int temp_DUMMY = 0
+            int message = (packetID << 12) | (temp_DUMMY << 4);
+            message = itf_addCRC(message);
+            uint8_t data[2] = {(uint8_t) ((message & 0xFF00)>>8),(uint8_t) (message & 0x00FF)};
+            itf_sendDataMCU((char*)data);
             break;
         case 14://Read Direction request (TEST MSG, DONT USE IN ACTUAL)
             if(source == 0){
