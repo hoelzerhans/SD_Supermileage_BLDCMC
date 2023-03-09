@@ -29,6 +29,7 @@ static const int ITF_TX_BUF_SIZE_UART1 = 1024;
 
 int itf_dirInput0 = -1;
 int itf_dirInput1 = -1;
+int itf_speedLocked = 0;
 
 
 int itf_decodePC(uint8_t* str);
@@ -41,7 +42,7 @@ uint8_t itf_crc4(uint8_t c, uint64_t x, int bits);
 int itf_sendDataMCU(const char* data);
 void itf_dirHandler(void *arg);
 void itf_initDirPins(void);
-
+int itf_crc4AndSend(int message);
 
 //Init the UART0 (PC->MCU) with baud rate of 19200
 void itf_init_UART0(void) {
@@ -185,20 +186,28 @@ int itf_actOnMessage(int message,int source){
     switch (packetID){
         case 1: //Speed set
             //set speed
+            if(itf_speedLocked == 0){
+                int speed_DUMMY = packetDATA; //may need scaling here
+            }
             break;
         case 2: //Enable/disable speed set
             //Lock/Unlock
+            itf_speedLocked = (packetDATA > 0);//1 = locked, 0 = unlocked
             break;
         case 3: //Dir set & dir lock
             //unlock/lock and set dir
             //New comment 
             break;
         case 4: //Req temp
-            int temp_DUMMY = 0
-            int message = (packetID << 12) | (temp_DUMMY << 4);
-            message = itf_addCRC(message);
-            uint8_t data[2] = {(uint8_t) ((message & 0xFF00)>>8),(uint8_t) (message & 0x00FF)};
-            itf_sendDataMCU((char*)data);
+            int temp_DUMMY = 0;//REPLACE WITH ACTAUL VAR
+            if(source == 0){
+                int message = (packetID << 12) | (temp_DUMMY << 4);
+                message = itf_addCRC(message);
+                uint8_t data[2] = {(uint8_t) ((message & 0xFF00)>>8),(uint8_t) (message & 0x00FF)};
+                itf_sendDataMCU((char*)data);
+            }else{
+                ESP_LOGI(c,"Temp = %d",temp_DUMMY);
+            }
             break;
         case 14://Read Direction request (TEST MSG, DONT USE IN ACTUAL)
             if(source == 0){
@@ -228,6 +237,12 @@ int itf_actOnMessage(int message,int source){
             break;
     }//End case statement
     return 1;
+}
+
+int itf_crc4AndSend(int message){
+    message = itf_addCRC(message);
+    uint8_t data[2] = {(uint8_t) ((message & 0xFF00)>>8),(uint8_t) (message & 0x00FF)};
+    return itf_sendDataMCU((char*)data);
 }
 
 int itf_sendDataMCU(const char* data)

@@ -15,6 +15,7 @@
     "idf.toolsPathWin": "C:\\Users\\hoelzerh\\.espressif",
     "files.associations": {
         "esp_system.h": "c",
-        "sdkconfig.h": "c"
+        "sdkconfig.h": "c",
+        "system_error": "cpp"
     }
 }
