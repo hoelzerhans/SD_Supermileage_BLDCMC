@@ -191,6 +191,7 @@ int itf_actOnMessage(int message,int source){
             break;
         case 3: //Dir set & dir lock
             //unlock/lock and set dir
+            //New comment 
             break;
         case 4: //Req temp
             int temp_DUMMY = 0
