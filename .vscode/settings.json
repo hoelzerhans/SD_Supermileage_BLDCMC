@@ -12,5 +12,8 @@
     ],
     "idf.portWin": "COM5",
     "idf.pythonBinPathWin": "C:\\Users\\hoelzerh\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
-    "idf.toolsPathWin": "C:\\Users\\hoelzerh\\.espressif"
+    "idf.toolsPathWin": "C:\\Users\\hoelzerh\\.espressif",
+    "files.associations": {
+        "esp_system.h": "c"
+    }
 }
