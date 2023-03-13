@@ -17,5 +17,6 @@
         "esp_system.h": "c",
         "sdkconfig.h": "c",
         "system_error": "cpp"
-    }
+    },
+    "idf.flashType": "UART"
 }

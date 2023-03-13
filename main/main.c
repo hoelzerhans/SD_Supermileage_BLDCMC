@@ -16,7 +16,7 @@
 
 
 //WILL NOT RUN BY DEFAULT, TEST MAIN for TESTS!!!!!!!!!!!
-void app_main_final(void)
+void app_main(void)
 {
     //This is the actaul main for the project.
     //Rename this function will testing another main, and dont delete other stuff here
