@@ -8,6 +8,8 @@ uint8_t itf_crc4(uint8_t c, uint64_t x, int bits);
 int itf_sendDataMCU(const char* data);
 void itf_dirHandler(void *arg);
 void itf_initDirPins(void);
+int itf_crc4AndSend(int message);
 
 extern int itf_dirInput1;
 extern int itf_dirInput0;
+extern int itf_speedLocked;
