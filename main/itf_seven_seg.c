@@ -4,9 +4,9 @@
 #include "itf_seven_seg.h"
 
 #ifndef ITF_HEX_DEFINES
-    #define ITF_A_PIN 7
-    #define ITF_B_PIN 15
-    #define ITF_C_PIN 16
+    #define ITF_A_PIN 9 //WAS 7
+    #define ITF_B_PIN 13 //WAS 15
+    #define ITF_C_PIN 14 //WAS 16
     #define ITF_D_PIN 17
     #define ITF_E_PIN 18
     #define ITF_F_PIN 8

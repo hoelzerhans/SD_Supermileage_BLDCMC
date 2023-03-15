@@ -5,7 +5,10 @@
 #include "driver/gpio.h"
 #include "itf_seven_seg.h"
 #include "itf_sd_card_writer.h"
-//#include "com_funcs.h"
+//#ifndef CTRL_SUBSYSTEM_H_
+#include "ctrl_subsystem.h"
+//#endif
+
 
 #ifndef ITF_COM_DEFINES
     #define ITF_TX_PIN_UART1 4
@@ -47,7 +50,7 @@ int itf_crc4AndSend(int message);
 //Init the UART0 (PC->MCU) with baud rate of 19200
 void itf_init_UART0(void) {
     const uart_config_t uart_config = {
-        .baud_rate = 19200,
+        .baud_rate = 115200,//19200
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -184,10 +187,17 @@ int itf_actOnMessage(int message,int source){
     #endif
     
     switch (packetID){
-        case 1: //Speed set
+        case 0: //Speed set
             //set speed
             if(itf_speedLocked == 0){
-                int speed_DUMMY = packetDATA; //may need scaling here
+                ctrl_setThrottle((uint16_t) (packetDATA*16));
+            }
+            break;
+        case 1: //Speed set mph
+            //set speed mph
+            float mphCalc = 10+0.17647*packetDATA;
+            if(itf_speedLocked == 0){
+                ctrl_setSpeedControl(mphCalc);
             }
             break;
         case 2: //Enable/disable speed set
@@ -196,10 +206,24 @@ int itf_actOnMessage(int message,int source){
             break;
         case 3: //Dir set & dir lock
             //unlock/lock and set dir
-            //New comment 
+            //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
+            if(packetDATA < 4){
+                ctrl_setDirection(packetDATA);
+            }
             break;
         case 4: //Req temp
-            int temp_DUMMY = 0;//REPLACE WITH ACTAUL VAR
+            int tempWanted = packetDATA & (0x03);//ABC
+            int temp_DUMMY = 0;
+
+            if(tempWanted == 0x00){
+                temp_DUMMY = ctrl_getPhaseTempA_f();
+            }else if(tempWanted == 0x01){
+                temp_DUMMY = ctrl_getPhaseTempB_f();
+            }else if(tempWanted == 0x02){
+                temp_DUMMY = ctrl_getPhaseTempC_f();
+            }
+            temp_DUMMY = temp_DUMMY*1;//CHANGE TO PROPER SCALING
+
             if(source == 0){
                 int message = (packetID << 12) | (temp_DUMMY << 4);
                 message = itf_addCRC(message);
@@ -208,6 +232,36 @@ int itf_actOnMessage(int message,int source){
             }else{
                 ESP_LOGI(c,"Temp = %d",temp_DUMMY);
             }
+            break;
+        case 5://Req MPH
+            int MPH_encoded = (int) ctrl_getSpeed_mph();
+            if(source == 0){
+                int message = (packetID<<12) | (MPH_encoded <<4);
+                itf_crc4AndSend(message);
+            }else{
+                 ESP_LOGI(c,"MPH = %d",MPH_encoded);
+            }
+            //Stuff
+            break;
+        case 6://Req CurrA
+            int CurrA_encoded = (int) ctrl_getCurrent_A();
+            if(source == 0){
+                int message = (packetID<<12) | (CurrA_encoded <<4);
+                itf_crc4AndSend(message);
+            }else{
+                 ESP_LOGI(c,"CurrA = %d",CurrA_encoded);
+            }
+            //Stuff
+            break;
+        case 7://Req BatVol
+            int BattV_encoded = (int) ctrl_getBatVolts_V();
+            if(source == 0){
+                int message = (packetID<<12) | (BattV_encoded <<4);
+                itf_crc4AndSend(message);
+            }else{
+                 ESP_LOGI(c,"MPH = %d",BattV_encoded);
+            }
+            //Stuff
             break;
         case 14://Read Direction request (TEST MSG, DONT USE IN ACTUAL)
             if(source == 0){
@@ -255,10 +309,10 @@ int itf_sendDataMCU(const char* data)
 }
 
 void itf_initDirPins(void){
-    //Dir0, Pullup
+    //Dir0, Pulldown
     //gpio_pad_select_gpio(ITF_DIR0_PIN);
 	gpio_set_direction(ITF_DIR0_PIN, GPIO_MODE_INPUT);
-	gpio_set_pull_mode(ITF_DIR0_PIN, GPIO_PULLUP_ONLY);
+	gpio_set_pull_mode(ITF_DIR0_PIN, GPIO_PULLDOWN_ONLY);
 	gpio_set_intr_type(ITF_DIR0_PIN, GPIO_INTR_ANYEDGE);
 	gpio_intr_enable(ITF_DIR0_PIN);
     //gpio_isr_register(itf_dirHandler, "Args", 0, NULL);
@@ -272,6 +326,7 @@ void itf_initDirPins(void){
 	gpio_intr_enable(ITF_DIR1_PIN);
     //gpio_isr_register(dir1Handler, "Args", 0, NULL);
     itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
+    ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
 
     gpio_install_isr_service(0);
     gpio_isr_handler_add(ITF_DIR0_PIN, itf_dirHandler, (void*) ITF_DIR0_PIN);
@@ -281,10 +336,76 @@ void itf_initDirPins(void){
 void itf_dirHandler(void *arg){
     itf_dirInput0 = gpio_get_level(ITF_DIR0_PIN);
     itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
+    //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
+    ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
+
     #ifdef COM_PRINT_DEF
         ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
     #endif
     return;
+}
+
+void PCComTask(void * params){
+    itf_init_UART0();
+    itf_initHex();
+    
+    int lastLength = -1;
+
+    while(1){
+        int length;
+        uart_get_buffered_data_len(UART_NUM_0,(size_t*) &length);
+           
+        if(lastLength != length){
+            ESP_LOGI("Info:","Data in buffer is %d long",length);
+            lastLength = length;
+        }
+        
+        uint8_t* data = (uint8_t*) malloc(7);
+        const int rxBytes = uart_read_bytes(UART_NUM_0, data, 7, 1000 / portTICK_PERIOD_MS);
+        if (rxBytes > 0) {
+            data[rxBytes] = 0;
+            ESP_LOGI("RX_TASK_TAG", "Read %d bytes: '%s'", rxBytes, data);
+            int messageVal = itf_decodePC(data);
+            ESP_LOGI("PC","Decoded message %x",messageVal);
+            if(itf_checkCRC(messageVal) != -1){
+                itf_actOnMessage(messageVal,1);
+            }else{
+                u_int messageVal_itf_crc4 = itf_addCRC(messageVal);
+                ESP_LOGI("PC","Correct CRC format would be %x",messageVal_itf_crc4);
+            }
+        }
+        vTaskDelay(50/portTICK_PERIOD_MS);
+    }
+}
+
+void MCUComTask(void * params){
+    itf_init_UART1();
+    itf_initHex();
+    init_control_subsystem();
+    
+    //int lastLength = -1;
+
+    while(1){
+        int length;
+        uart_get_buffered_data_len(UART_NUM_1,(size_t*) &length);
+        
+        uint8_t* data = (uint8_t*) malloc(2);
+        const int rxBytes = uart_read_bytes(UART_NUM_1, data, 2, 1000 / portTICK_PERIOD_MS);
+        if (rxBytes > 0) {
+            data[rxBytes] = 0;
+            ESP_LOGI("MCU", "Read %d bytes: '%x''%x'", rxBytes, data[0],data[1]);
+            
+            int messageVal = (data[0]<<8) | (data[1]);
+            ESP_LOGI("MCU","Decoded message %x",messageVal);
+            if(itf_checkCRC(messageVal) != -1){
+                itf_actOnMessage(messageVal,0);
+            }else{
+                u_int messageVal_itf_crc4 = itf_addCRC(messageVal);
+                ESP_LOGI("MCU","Correct CRC format would be %x",messageVal_itf_crc4);
+            }
+        }
+        vTaskDelay(50/portTICK_PERIOD_MS);
+    }
 }
 
 

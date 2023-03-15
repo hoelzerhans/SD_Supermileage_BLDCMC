@@ -43,6 +43,7 @@ void itf_writeTestMessage(char *str);
 int itf_writeFileFromBuffer(int bufferNum);
 int itf_addToSD(char *toStore,int length);
 int itf_addTestToSD(int testNum);
+int itf_initSD(void);
 
 //A simple task for writing to the SD when buffers fill up
 void itf_writeSD_task(void * params)
@@ -72,9 +73,72 @@ void itf_writeSD_task(void * params)
                     SD_buffer1_index = 0;
             }
         }
-        vTaskDelay(50/portTICK_PERIOD_MS);
+        vTaskDelay(200/portTICK_PERIOD_MS);
     }
     itf_turnoffSD();
+}
+
+int itf_addImportantData(void){
+    /*
+    char dataToStore[23];
+    //"Unique" segment 
+    dataToStore[0] = 0xDE
+    dataToStore[1] = 0xAD
+    dataToStore[2] = 0xBE
+    dataToStore[3] = 0xEF
+
+    //Speed (1)
+    dataToStore[4] = (char) ctrl_getSpeed_mph();
+
+    //InstPower (2)
+    int iPower = (int) ctrl_getInstPower_W();
+    dataToStore[5] = (char) ((iPower & 0xFF00)>>8);
+    dataToStore[6] = (char) (iPower & 0x00FF);
+
+    //AvgPower (2)
+    int aPower = (int) ctrl_getAvePower_W();
+    dataToStore[7] = (char) ((aPower & 0xFF00)>>8);
+    dataToStore[8] = (char) (aPower & 0x00FF);
+
+    //Volts (1)
+    dataToStore[9] = (char) ctrl_getBatVolts_V();
+
+    //CurrA (1)
+    dataToStore[10] = (char) ctrl_getCurrent_A();
+
+    //TempA (2)
+    int tempA = (int) ctrl_getPhaseTempA_f();
+    dataToStore[11] = (char) ((tempA & 0xFF00)>>8);
+    dataToStore[12] = (char) (tempA & 0x00FF);
+
+    //TempB (2)
+    int tempB = (int) ctrl_getPhaseTempB_f();
+    dataToStore[13] = (char) ((tempB & 0xFF00)>>8);
+    dataToStore[14] = (char) (tempB & 0x00FF);
+
+    //TempC (2)
+    int tempC = (int) ctrl_getPhaseTempC_f();
+    dataToStore[15] = (char) ((tempC & 0xFF00)>>8);
+    dataToStore[16] = (char) (tempC & 0x00FF);
+
+    //Error + Shutdown (1)
+    int shutDown = (ctrl_isInSafetyShutdown > 0);
+    dataToStore[17] = (shutDown<<7) | (ctrl_getErrorCode());
+
+    //Throttle (1)
+    dataToStore[18] = (char) (((int) ctrl_getThrottle())>>4);
+
+    //Time (4)
+    uint64_t time = ctrl_getTime();
+    dataToStore[19] = (char) ((time & 0xFF000000)>>24
+    dataToStore[20] = 
+    dataToStore[21] = 
+    dataToStore[22] = 
+
+    itf_addToSD(dataToStore,23);
+    return 0;
+    */
+   return 1;
 }
 
 //Use itf_forceWriteBuffers_FLAG var to trigger this
