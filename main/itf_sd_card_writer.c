@@ -15,6 +15,7 @@
 #include "sdmmc_cmd.h"
 #include "esp_log.h"
 #include "itf_sd_card_setup.h"
+#include "ctrl_subsystem.h"
 
 static const char *TAGW = "Writer:";
 
@@ -44,6 +45,7 @@ int itf_writeFileFromBuffer(int bufferNum);
 int itf_addToSD(char *toStore,int length);
 int itf_addTestToSD(int testNum);
 int itf_initSD(void);
+int itf_addImportantData(void);
 
 //A simple task for writing to the SD when buffers fill up
 void itf_writeSD_task(void * params)
@@ -79,13 +81,13 @@ void itf_writeSD_task(void * params)
 }
 
 int itf_addImportantData(void){
-    /*
+    
     char dataToStore[23];
     //"Unique" segment 
-    dataToStore[0] = 0xDE
-    dataToStore[1] = 0xAD
-    dataToStore[2] = 0xBE
-    dataToStore[3] = 0xEF
+    dataToStore[0] = 0xDE;
+    dataToStore[1] = 0xAD;
+    dataToStore[2] = 0xBE;
+    dataToStore[3] = 0xEF;
 
     //Speed (1)
     dataToStore[4] = (char) ctrl_getSpeed_mph();
@@ -122,7 +124,7 @@ int itf_addImportantData(void){
     dataToStore[16] = (char) (tempC & 0x00FF);
 
     //Error + Shutdown (1)
-    int shutDown = (ctrl_isInSafetyShutdown > 0);
+    int shutDown = (ctrl_isInSafetyShutdown() > 0);
     dataToStore[17] = (shutDown<<7) | (ctrl_getErrorCode());
 
     //Throttle (1)
@@ -130,15 +132,15 @@ int itf_addImportantData(void){
 
     //Time (4)
     uint64_t time = ctrl_getTime();
-    dataToStore[19] = (char) ((time & 0xFF000000)>>24
-    dataToStore[20] = 
-    dataToStore[21] = 
-    dataToStore[22] = 
+    dataToStore[19] = (char) ((time & 0xFF000000)>>24);
+    dataToStore[20] = (char) ((time & 0x00FF0000)>>16);
+    dataToStore[21] = (char) ((time & 0x0000FF00)>>8);
+    dataToStore[22] = (char) ((time & 0x000000FF)>>0);
 
     itf_addToSD(dataToStore,23);
     return 0;
-    */
-   return 1;
+    
+   //return 1;
 }
 
 //Use itf_forceWriteBuffers_FLAG var to trigger this
@@ -204,7 +206,7 @@ void itf_writeTestMessage(char *str){
 //hundreds of ms, so be careful when calling
 int itf_writeFileFromBuffer(int bufferNum){
     int startTime = esp_log_timestamp();
-    const char *file_hello = ITF_MOUNT_POINT"/data.txt";
+    const char *file_hello = ITF_MOUNT_POINT"/data.bin";
     int startTime2 = 0;
     int endTime2 = 0;
     #ifdef SD_WRITE_PRINTS_DEF
