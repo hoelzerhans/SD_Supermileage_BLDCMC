@@ -16,7 +16,9 @@
 
 //Comment out this line when NOT testing
 #define _CTRL_SYSTEM_TEST_
-
+//Same here, initizes (somewhat unrealistic) values for everything recorded by SD, for proper testing
+//Needs above initailized aswell
+//#define _CTRL_ITF_SYSTEM_TEST_
 
 
 
@@ -89,7 +91,7 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 
 
 //******************************************************     TASK-RELATED DEFINITIONS     ******************************************************
-#define ctrl_OPERATIONAL_TASK_STACK_SIZE 4096
+#define ctrl_OPERATIONAL_TASK_STACK_SIZE 4096*5
 
 
 
@@ -136,18 +138,18 @@ const uint8_t ctrl_change_table[6][4] = {
 
 //******************************************************     VARIABLES/GETTERS/SETTERS    ******************************************************
 //Processed sensor values
-float ctrl_batVolt = 0;
-float ctrl_totCur = 0;
-float ctrl_curA = 0;
-float ctrl_curB = 0;
-float ctrl_curC = 0;
-float ctrl_tempA = 0;
-float ctrl_tempB = 0;
-float ctrl_tempC = 0;
+double ctrl_batVolt = 0;
+double ctrl_totCur = 0;
+double ctrl_curA = 0;
+double ctrl_curB = 0;
+double ctrl_curC = 0;
+double ctrl_tempA = 0;
+double ctrl_tempB = 0;
+double ctrl_tempC = 0;
 
 //Motor control and speed variables
 uint8_t  ctrl_direction_command = 0x00;             //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
-float    ctrl_speedSetting_mph = 0.0;               //Set to true to use the speed control algorithm. False will use the current hall state only.
+double    ctrl_speedSetting_mph = 0.0;               //Set to true to use the speed control algorithm. False will use the current hall state only.
 bool     ctrl_mc_armed = false;                     //Set to true after the motor passes startup safety checks (including throttle == 0) AND direction is 0b10 or 0b01
                                                     //Set to false after the direction changes to 0b00 or 0b11
 uint16_t ctrl_speed_control_duty_raw = 0;           //Raw speed control value. Value from 0 to 4095.
@@ -163,10 +165,10 @@ uint8_t  ctrl_expected_hall_state = 0x00;           //Contains the next hall sta
 uint8_t  ctrl_skipped_commutations = 0x00;          //Tracks the number of incoherent hall state commutations that have been observed since program start.
 
 //Calculated quantities
-float ctrl_speed_mph = 0.0;         //Current ground speed in mph
-float ctrl_instPower = 0.0;         //Power based on the most recent current and voltage readings
-float ctrl_avePower = 0.0;          //Average power consumption in watts over the entire runtime
-float ctrl_totEnergy = 0.0;         //Total energy consumption in Joules
+double ctrl_speed_mph = 0.0;         //Current ground speed in mph
+double ctrl_instPower = 0.0;         //Power based on the most recent current and voltage readings
+double ctrl_avePower = 0.0;          //Average power consumption in watts over the entire runtime
+double ctrl_totEnergy = 0.0;         //Total energy consumption in Joules
 uint32_t ctrl_runTime = 0.0;        //Total motor running time in milliseconds
 
 //double ctrl_instPower_safe = 0.0; Hans test thing
@@ -178,23 +180,24 @@ uint64_t ctrl_commutation_timestamps[3] = {0,0,0};
 
 //HANS TEST VAR
 uint64_t intrTime_test = 0;
+uint64_t intrTime_test_last = 0;
 
 
 //******************************* GET functions
-float ctrl_getSpeed_mph(void)           { return ctrl_speed_mph; }
-float ctrl_getInstPower_W(void)         { return ctrl_instPower; }
-float ctrl_getAvePower_W(void)          { return (ctrl_totEnergy / ((float)(ctrl_runTime)));  }
-float ctrl_getTotEnergy_j(void)         { return ctrl_totEnergy;  }
-float ctrl_getBatVolts_V(void)          { return ctrl_batVolt; }
-float ctrl_getCurrent_A(void)           { return ctrl_totCur; }
-float ctrl_getPhaseCurA_A(void)         { return ctrl_curA; }
-float ctrl_getPhaseCurB_A(void)         { return ctrl_curB; }
-float ctrl_getPhaseCurC_A(void)         { return ctrl_curC; }
-float ctrl_getPhaseTempA_f(void)        { return ctrl_tempA; }
-float ctrl_getPhaseTempB_f(void)        { return ctrl_tempB; }
-float ctrl_getPhaseTempC_f(void)        { return ctrl_tempC; }
-float ctrl_getSpeedSetting_mph(void)    { return ctrl_speedSetting_mph; }           //Speed may be controlled between 10.0 and 55.0 mph
-float ctrl_getThrottle(void)            { return ctrl_throttle; }                   //Throttle may be from 0 to 4096 (0% to 100%)
+double ctrl_getSpeed_mph(void)           { return ctrl_speed_mph; }
+double ctrl_getInstPower_W(void)         { return ctrl_instPower; }
+double ctrl_getAvePower_W(void)          { return (ctrl_totEnergy / ((double)(ctrl_runTime)));  }
+double ctrl_getTotEnergy_j(void)         { return ctrl_totEnergy;  }
+double ctrl_getBatVolts_V(void)          { return ctrl_batVolt; }
+double ctrl_getCurrent_A(void)           { return ctrl_totCur; }
+double ctrl_getPhaseCurA_A(void)         { return ctrl_curA; }
+double ctrl_getPhaseCurB_A(void)         { return ctrl_curB; }
+double ctrl_getPhaseCurC_A(void)         { return ctrl_curC; }
+double ctrl_getPhaseTempA_f(void)        { return ctrl_tempA; }
+double ctrl_getPhaseTempB_f(void)        { return ctrl_tempB; }
+double ctrl_getPhaseTempC_f(void)        { return ctrl_tempC; }
+double ctrl_getSpeedSetting_mph(void)    { return ctrl_speedSetting_mph; }           //Speed may be controlled between 10.0 and 55.0 mph
+double ctrl_getThrottle(void)            { return ctrl_throttle; }                   //Throttle may be from 0 to 4096 (0% to 100%)
 
 
 
@@ -257,7 +260,7 @@ void ctrl_operational_task(void *arg);         //ctrl_operational_task() is a ta
 
 //FUNCTIONS:
 void ctrl_alignOutputToHall(void);      //ctrl_alignOutputToHall() aligns the cur_input_index, cur_output_index, and expected_hall_state to match to the most recently read hall_state (also takes direction into account for the expected_hall_state)
-void ctrl_getHallState(void);           //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variable.
+uint8_t ctrl_getHallState(void);           //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variable.
 void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use);    //ctrl_set_MSFTOutput() sets all of the MOSFET output signals to match the given index in the output_table. Also responsible for enforcing safety_shutdown as well as considering whether or not run_motor is good to go
 
 //SETUP (ONE-TIME) FUNCTIONS:
@@ -289,6 +292,14 @@ void init_control_subsystem(void) {
         ctrl_speedSetting_mph = 12;                 //Set to non-zero (and between the min and max thresholds (10-55 mph at time of writing)) to activate speed control.
         ctrl_usingSpeedControl = true;                   
         ctrl_throttle = 1000;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
+        
+        #ifdef _CTRL_ITF_SYSTEM_TEST_
+            ctrl_curB       = -10.2;
+            ctrl_curC       = 23.6;
+            ctrl_tempB = 40.5;
+            ctrl_tempC = 63.2;
+        #endif
+    
     #endif
 
     //Run initial setup functions for control subsystem:
@@ -381,7 +392,9 @@ void ctrl_setup_Hall(void) {
 
 
 //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variables
-void ctrl_getHallState(void) { ctrl_hall_state = (gpio_get_level(ctrl_HC_IN) << 2) | (gpio_get_level(ctrl_HB_IN)<<1) | gpio_get_level(ctrl_HA_IN); }
+uint8_t ctrl_getHallState(void) { ctrl_hall_state = (gpio_get_level(ctrl_HC_IN) << 2) | (gpio_get_level(ctrl_HB_IN)<<1) | gpio_get_level(ctrl_HA_IN);
+    return ctrl_hall_state;
+ }
 
 
 void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use) { 
@@ -491,7 +504,10 @@ void ctrl_operational_task(void *arg) {
     static uint32_t update_timer_alarmed;
     while(1)
     {
-        ESP_LOGE("TestMsg","Itr Time: %d",(int) intrTime_test);
+        if(intrTime_test != intrTime_test_last){
+            ESP_LOGI("Testmsg","time: %d",(int)intrTime_test);
+            intrTime_test_last = intrTime_test;
+        }
         //Wake when notified that the update timer has alarmed
         update_timer_alarmed = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(update_timer_alarmed) {
@@ -592,6 +608,7 @@ void ctrl_operational_task(void *arg) {
 
                 } else {
                     itf_displayHex(0);
+                    
                     /* 
                         If the program reaches this point in execution, we know:
                             (1) the motor is armed/running and
@@ -653,7 +670,7 @@ static void ctrl_hall_isr(void *args)
     //int pinNumber = (int)args;
 
     //Increment the commutation counter (used for speed control)
-    //uint64_t startTime = esp_timer_get_time(); Hans test timing
+    //uint64_t startTime = esp_timer_get_time();
     ctrl_commutation_counter++;
 
     //Record and retain the time information for the three most recent commutations.
@@ -672,25 +689,25 @@ static void ctrl_hall_isr(void *args)
 
 
     //HANS TEST STUFF!!
-    /*
-    //itf_addImportantData();
+    
+    itf_addShortData();
+    if(ITF_LONGDATA_FLAG){
+        itf_addLongData();
+    }
+    //uint8_t dataToStore[23];
 
-    uint8_t dataToStore[23];
 
-
-    int iPower1 = ctrl_instPower_safe;
+   // int iPower1 = ctrl_instPower_safe;
     //int iPower = iPower1;
-    int iPower = ctrl_getInstPower_W();
-    dataToStore[5] = (char) ((iPower & 0xFF00)>>8);
+    //int iPower = ctrl_getInstPower_W();
+    //dataToStore[5] = (char) ((iPower & 0xFF00)>>8);
     //dataToStore[6] = iPower;
-
-    uint64_t endTime = esp_timer_get_time();
-    intrTime_test = endTime-startTime;
-    //if(iPower){
-    //   intrTime_test = 6969;
+    
+    //uint64_t endTime = esp_timer_get_time();
+    //if(ITF_LONGDATA_FLAG){
+    //    intrTime_test = endTime - startTime;
     //}
-    //ESP_LOGE("TestMsg","Itr Time: %d",intrTime_test;
-    */
+    ITF_LONGDATA_FLAG = 0;
 }
 
 //ctrl_operational_timer_cb() is used to unblock the control subsystem's operational tasks with precise timing

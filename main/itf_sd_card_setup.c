@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
+#include "itf_master_defines.h"
 
 static const char *TAG = "SD_Setup";
 

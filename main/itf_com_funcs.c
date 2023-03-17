@@ -8,7 +8,7 @@
 //#ifndef CTRL_SUBSYSTEM_H_
 #include "ctrl_subsystem.h"
 //#endif
-
+#include "itf_master_defines.h"
 
 #ifndef ITF_COM_DEFINES
     #define ITF_TX_PIN_UART1 4
@@ -381,7 +381,7 @@ void PCComTask(void * params){
 void MCUComTask(void * params){
     itf_init_UART1();
     itf_initHex();
-    init_control_subsystem();
+    //init_control_subsystem();
     
     //int lastLength = -1;
 

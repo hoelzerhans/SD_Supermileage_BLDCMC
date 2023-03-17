@@ -22,7 +22,7 @@
 #define ITF_SD_MOSI_PIN  35
 #define ITF_SD_CLK_PIN   36
 #define ITF_SD_CS_PIN    38
-#define ITF_SD_BUFFER_SIZE ITF_SD_WRITE_SIZE*2
+#define ITF_SD_BUFFER_SIZE ITF_SD_WRITE_SIZE*20
 
 //SD card wrting defines
 #define ITF_HEX_DEFINES 1

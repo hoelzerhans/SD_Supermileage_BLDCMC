@@ -11,7 +11,7 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 
-//#include "ctrl_subsystem.h"
+#include "ctrl_subsystem.h"
 #include "itf_seven_seg.h"
 #include "itf_com_funcs.h"
 #include "itf_sd_card_writer.h"
@@ -33,7 +33,7 @@ void app_main(void)
 {
     itf_initDirPins();
     itf_initHex();
-    //init_control_subsystem();
+    init_control_subsystem();
     
     xTaskCreate(PCComTask,"PCTask",1024*20,NULL,configMAX_PRIORITIES-1,NULL);
     xTaskCreate(MCUComTask,"MCUTask",1024*20,NULL,configMAX_PRIORITIES,NULL);

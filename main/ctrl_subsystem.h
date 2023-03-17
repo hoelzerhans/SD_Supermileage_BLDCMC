@@ -19,23 +19,26 @@
 
 //Comment out this line when NOT testing
 #define _CTRL_SYSTEM_TEST_
+//Same here, initizes (somewhat unrealistic) values for everything recorded by SD, for proper testing
+//Needs above initailized aswell
+//#define _CTRL_ITF_SYSTEM_TEST_
 
 
 //******************************* GET functions
-float ctrl_getSpeed_mph(void);
-float ctrl_getInstPower_W(void);
-float ctrl_getAvePower_W(void);
-float ctrl_getTotEnergy_j(void);
-float ctrl_getBatVolts_V(void);
-float ctrl_getCurrent_A(void);
-float ctrl_getPhaseCurA_A(void);
-float ctrl_getPhaseCurB_A(void);
-float ctrl_getPhaseCurC_A(void);
-float ctrl_getPhaseTempA_f(void);
-float ctrl_getPhaseTempB_f(void);
-float ctrl_getPhaseTempC_f(void);
-float ctrl_getSpeedSetting_mph(void);         //Speed may be controlled between 10.0 and 55.0 mph
-float ctrl_getThrottle(void);                //Throttle may be from 0 to 4096 (0% to 100%)
+double ctrl_getSpeed_mph(void);
+double ctrl_getInstPower_W(void);
+double ctrl_getAvePower_W(void);
+double ctrl_getTotEnergy_j(void);
+double ctrl_getBatVolts_V(void);
+double ctrl_getCurrent_A(void);
+double ctrl_getPhaseCurA_A(void);
+double ctrl_getPhaseCurB_A(void);
+double ctrl_getPhaseCurC_A(void);
+double ctrl_getPhaseTempA_f(void);
+double ctrl_getPhaseTempB_f(void);
+double ctrl_getPhaseTempC_f(void);
+double ctrl_getSpeedSetting_mph(void);         //Speed may be controlled between 10.0 and 55.0 mph
+double ctrl_getThrottle(void);                //Throttle may be from 0 to 4096 (0% to 100%)
 bool  ctrl_isArmed(void);
 bool  ctrl_isInSafetyShutdown(void);   //If safety shutdown is anything except 0, system is in safety shutdown
 uint8_t ctrl_getErrorCode(void);           //The value of safety_shutdown IS the error code
@@ -63,7 +66,7 @@ void ctrl_operational_task(void *arg);         //ctrl_operational_task() is a ta
 
 //FUNCTIONS:
 void ctrl_alignOutputToHall(void);      //ctrl_alignOutputToHall() aligns the cur_input_index, cur_output_index, and expected_hall_state to match to the most recently read hall_state (also takes direction into account for the expected_hall_state)
-void ctrl_getHallState(void);           //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variable.
+uint8_t ctrl_getHallState(void);           //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variable.
 void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use);    //ctrl_set_MSFTOutput() sets all of the MOSFET output signals to match the given index in the output_table. Also responsible for enforcing safety_shutdown as well as considering whether or not run_motor is good to go
 
 //SETUP (ONE-TIME) FUNCTIONS:
