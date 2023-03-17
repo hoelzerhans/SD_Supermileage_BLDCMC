@@ -505,7 +505,7 @@ void ctrl_operational_task(void *arg) {
     while(1)
     {
         if(intrTime_test != intrTime_test_last){
-            ESP_LOGI("Testmsg","time: %d",(int)intrTime_test);
+            //ESP_LOGI("Testmsg","time: %d",(int)intrTime_test);
             intrTime_test_last = intrTime_test;
         }
         //Wake when notified that the update timer has alarmed

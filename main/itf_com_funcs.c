@@ -191,6 +191,7 @@ int itf_actOnMessage(int message,int source){
             //set speed
             if(itf_speedLocked == 0){
                 ctrl_setThrottle((uint16_t) (packetDATA*16));
+                ESP_LOGI("Response","Set throttle to %d",packetDATA*16);
             }
             break;
         case 1: //Speed set mph
@@ -198,11 +199,15 @@ int itf_actOnMessage(int message,int source){
             float mphCalc = 10+0.17647*packetDATA;
             if(itf_speedLocked == 0){
                 ctrl_setSpeedControl(mphCalc);
+                ESP_LOGI("Response","Set MPH to %f",mphCalc);
+            }else{
+                ESP_LOGI("Response","Speed is locked");
             }
             break;
         case 2: //Enable/disable speed set
             //Lock/Unlock
             itf_speedLocked = (packetDATA > 0);//1 = locked, 0 = unlocked
+            ESP_LOGI("Response","Set speedLock to %d",itf_speedLocked);
             break;
         case 3: //Dir set & dir lock
             //unlock/lock and set dir
@@ -240,6 +245,7 @@ int itf_actOnMessage(int message,int source){
                 itf_crc4AndSend(message);
             }else{
                  ESP_LOGI(c,"MPH = %d",MPH_encoded);
+                 ESP_LOGI(c,"Set MPH = %f",ctrl_getSpeedSetting_mph);
             }
             //Stuff
             break;
@@ -249,7 +255,7 @@ int itf_actOnMessage(int message,int source){
                 int message = (packetID<<12) | (CurrA_encoded <<4);
                 itf_crc4AndSend(message);
             }else{
-                 ESP_LOGI(c,"CurrA = %d",CurrA_encoded);
+                 ESP_LOGI(c,"CurrA = %d",ctrl_getCurrent_A());
             }
             //Stuff
             break;
@@ -259,7 +265,7 @@ int itf_actOnMessage(int message,int source){
                 int message = (packetID<<12) | (BattV_encoded <<4);
                 itf_crc4AndSend(message);
             }else{
-                 ESP_LOGI(c,"MPH = %d",BattV_encoded);
+                 ESP_LOGI(c,"Bat Voltage = %f",ctrl_getBatVolts_V());
             }
             //Stuff
             break;
