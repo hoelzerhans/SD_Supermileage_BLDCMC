@@ -214,6 +214,7 @@ int itf_actOnMessage(int message,int source){
             //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
             if(packetDATA < 4){
                 ctrl_setDirection(packetDATA);
+                ESP_LOGI("Response","Set Dir to %d",packetDATA);
             }
             break;
         case 4: //Req temp
