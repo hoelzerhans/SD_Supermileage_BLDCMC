@@ -1,24 +1,29 @@
 {
     "C_Cpp.intelliSenseEngine": "Tag Parser",
     "idf.adapterTargetName": "esp32s3",
-    "idf.customExtraPaths": "C:\\Espressif\\tools\\xtensa-esp-elf-gdb\\11.2_20220823\\xtensa-esp-elf-gdb\\bin;C:\\Espressif\\tools\\riscv32-esp-elf-gdb\\11.2_20220823\\riscv32-esp-elf-gdb\\bin;C:\\Espressif\\tools\\xtensa-esp32-elf\\esp-2022r1-11.2.0\\xtensa-esp32-elf\\bin;C:\\Espressif\\tools\\xtensa-esp32s2-elf\\esp-2022r1-11.2.0\\xtensa-esp32s2-elf\\bin;C:\\Espressif\\tools\\xtensa-esp32s3-elf\\esp-2022r1-11.2.0\\xtensa-esp32s3-elf\\bin;C:\\Espressif\\tools\\riscv32-esp-elf\\esp-2022r1-11.2.0\\riscv32-esp-elf\\bin;C:\\Espressif\\tools\\esp32ulp-elf\\2.35_20220830\\esp32ulp-elf\\bin;C:\\Espressif\\tools\\cmake\\3.24.0\\bin;C:\\Espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026\\openocd-esp32\\bin;C:\\Espressif\\tools\\ninja\\1.10.2;C:\\Espressif\\tools\\idf-exe\\1.0.3;C:\\Espressif\\tools\\ccache\\4.6.2\\ccache-4.6.2-windows-x86_64;C:\\Espressif\\tools\\dfu-util\\0.9\\dfu-util-0.9-win64",
+    "idf.customExtraPaths": "C:\\Users\\hoelzerh\\.espressif\\tools\\xtensa-esp-elf-gdb\\11.2_20220823\\xtensa-esp-elf-gdb\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\riscv32-esp-elf-gdb\\11.2_20220823\\riscv32-esp-elf-gdb\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\xtensa-esp32-elf\\esp-2022r1-11.2.0\\xtensa-esp32-elf\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\xtensa-esp32s2-elf\\esp-2022r1-11.2.0\\xtensa-esp32s2-elf\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\xtensa-esp32s3-elf\\esp-2022r1-11.2.0\\xtensa-esp32s3-elf\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\riscv32-esp-elf\\esp-2022r1-11.2.0\\riscv32-esp-elf\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\esp32ulp-elf\\2.35_20220830\\esp32ulp-elf\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\cmake\\3.24.0\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026\\openocd-esp32\\bin;C:\\Users\\hoelzerh\\.espressif\\tools\\ninja\\1.10.2;C:\\Users\\hoelzerh\\.espressif\\tools\\idf-exe\\1.0.3;C:\\Users\\hoelzerh\\.espressif\\tools\\ccache\\4.6.2\\ccache-4.6.2-windows-x86_64;C:\\Users\\hoelzerh\\.espressif\\tools\\dfu-util\\0.9\\dfu-util-0.9-win64",
     "idf.customExtraVars": {
-        "OPENOCD_SCRIPTS": "C:\\Espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026\\openocd-esp32\\share\\openocd\\scripts\\",
+        "OPENOCD_SCRIPTS": "C:\\Users\\hoelzerh\\.espressif\\tools\\openocd-esp32\\v0.11.0-esp32-20221026/openocd-esp32/share/openocd/scripts",
         "IDF_CCACHE_ENABLE": "1"
     },
-    "idf.espIdfPathWin": "C:\\Users\\colbertc\\esp\\esp-idf",
+    "idf.espIdfPathWin": "C:\\Users\\hoelzerh\\esp\\esp-idf",
     "idf.openOcdConfigs": [
         "board/esp32s3-builtin.cfg"
     ],
-    "idf.portWin": "COM14",
-    "idf.pythonBinPathWin": "C:\\Espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
-    "idf.toolsPathWin": "C:\\Espressif",
+    "idf.portWin": "COM8",
+    "idf.pythonBinPathWin": "C:\\Users\\hoelzerh\\.espressif\\python_env\\idf5.0_py3.8_env\\Scripts\\python.exe",
+    "idf.toolsPathWin": "C:\\Users\\hoelzerh\\.espressif",
     "files.associations": {
         "esp_system.h": "c",
         "sdkconfig.h": "c",
-        "system_error": "c",
-        "random": "c",
-        "functional": "c"
+        "system_error": "cpp",
+        "itf_sd_card_setup.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "itf_sd_card_writer.h": "c",
+        "ctrl_subsystem.h": "c",
+        "itf_master_defines.h": "c"
     },
     "idf.flashType": "UART"
 }
