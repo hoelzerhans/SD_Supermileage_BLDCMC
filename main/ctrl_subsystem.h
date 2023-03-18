@@ -51,6 +51,7 @@ uint8_t ctrl_setThrottle(uint16_t desired_throttle);
 
 uint8_t ctrl_setDirection(uint8_t new_direction);
 
+uint8_t ctrl_turnOffSpeedControl(void) ;
 
 
 //******************************************************     PROTOTYPES    ******************************************************

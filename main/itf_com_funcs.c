@@ -32,7 +32,7 @@ static const int ITF_TX_BUF_SIZE_UART1 = 1024;
 
 int itf_dirInput0 = -1;
 int itf_dirInput1 = -1;
-int itf_speedLocked = 0;
+int itf_speedLocked = 0;    //CALEB: Could you tell me more about this variable at some point?
 
 
 int itf_decodePC(uint8_t* str);
@@ -186,20 +186,24 @@ int itf_actOnMessage(int message,int source){
         ESP_LOGI("AoM","Packet ID is %d",packetID);
     #endif
     
+    uint16_t result = 0;
     switch (packetID){
         case 0: //Speed set
             //set speed
             if(itf_speedLocked == 0){
-                ctrl_setThrottle((uint16_t) (packetDATA*16));
+                result = ctrl_setThrottle(((uint16_t)(packetDATA*16)));
                 ESP_LOGI("Response","Set throttle to %d",packetDATA*16);
+                if(result) { ESP_LOGI("Response","Variable set attempt FAILED"); }
             }
             break;
         case 1: //Speed set mph
             //set speed mph
-            float mphCalc = 10+0.17647*packetDATA;
+            float mphCalc = 10.0+0.17647*((float)(packetDATA));
             if(itf_speedLocked == 0){
-                ctrl_setSpeedControl(mphCalc);
+                result = ctrl_setSpeedControl(mphCalc);
+                ESP_LOGI(c,"Speed Control Activated.");
                 ESP_LOGI("Response","Set MPH to %f",mphCalc);
+                if(result) { ESP_LOGI("Response","Variable set attempt FAILED"); }
             }else{
                 ESP_LOGI("Response","Speed is locked");
             }
@@ -269,6 +273,11 @@ int itf_actOnMessage(int message,int source){
                  ESP_LOGI(c,"Bat Voltage = %f",ctrl_getBatVolts_V());
             }
             //Stuff
+            break;
+        //CALEB: ADDED CASE 8, please check
+        case 8://deactivate speed control
+            ctrl_turnOffSpeedControl();
+            ESP_LOGI(c,"Speed Control Deactivated.");
             break;
         case 14://Read Direction request (TEST MSG, DONT USE IN ACTUAL)
             if(source == 0){
@@ -389,7 +398,7 @@ void MCUComTask(void * params){
     itf_init_UART1();
     itf_initHex();
     //init_control_subsystem();
-    
+     
     //int lastLength = -1;
 
     while(1){

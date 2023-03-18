@@ -26,7 +26,7 @@
 static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any outgoing serial communication messages from this subsystem.
 
 //Calculation of vital parameters:
-#define ctrl_HUBDIAMETER_IN   (19.0)         //USERSET: The RADIUS of the wheel in inches
+#define ctrl_HUBDIAMETER_IN (19.0)         //USERSET: The RADIUS of the wheel in inches
 #define ctrl_MOTORPOLES_FL  (46.0)         //USERSET: The number of poles on the BLDC motor to be controlled
 #define ctrl_MOTORPHASES_FL (3.0)          //USERSET: The number of phases on the BLDC motor to be controlled
 #define ctrl_CONV_IN_MI     (1.0/63360.0)  //Conversion factor: inches to miles
@@ -61,8 +61,7 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 #define ctrl_PWM_FREQ   (10000)             // Frequency in Hertz.
 #define ctrl_MIN_SPEED_CONTROL_MPH      10.0
 #define ctrl_MAX_SPEED_CONTROL_MPH      55.0
-//#define ctrl_SPDCTRL_PGAIN              (41.0*3.0)      //41.0 is 1% duty cycle increase.
-#define ctrl_SPDCTRL_PGAIN              (100.0)      //75.0 gives full range of throttle from 10 to 55 mph
+#define ctrl_SPDCTRL_PGAIN              (100.0)      //91.02 gives full range of throttle from 10 to 55 mph
 
 
 
@@ -149,10 +148,10 @@ double ctrl_tempC = 0;
 
 //Motor control and speed variables
 uint8_t  ctrl_direction_command = 0x00;             //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
-double    ctrl_speedSetting_mph = 0.0;               //Set to true to use the speed control algorithm. False will use the current hall state only.
+double   ctrl_speedSetting_mph = 0.0;               //Set to true to use the speed control algorithm. False will use the current hall state only.
 bool     ctrl_mc_armed = false;                     //Set to true after the motor passes startup safety checks (including throttle == 0) AND direction is 0b10 or 0b01
                                                     //Set to false after the direction changes to 0b00 or 0b11
-uint16_t ctrl_speed_control_duty_raw = 0;           //Raw speed control value. Value from 0 to 4095.
+uint16_t ctrl_speed_control_duty_raw = 2047;        //Raw speed control value. Value from 0 to 4095.
 uint16_t ctrl_speed_control_duty_final = 0;         //Speed control raw value combined with any P or I feedback. 
 uint16_t ctrl_throttle = 0;                         //Throttle value can be from 0 to 255. Must be 0 on startup, or motor will not be allowed to start.
 uint8_t  ctrl_safety_shutdown = false;              //This can be set to true from anywhere in the program. Should only ever be set to false within the safety_shutdown task
@@ -218,18 +217,21 @@ uint8_t ctrl_setSpeedControl(float target_mph) {
 
     //If execution reaches this point, then the speed control setting may be made:
     ctrl_speedSetting_mph = target_mph;
-    ctrl_usingSpeedControl = true;
+    ctrl_usingSpeedControl = true;      //Automatically turns on speed control when execution reaches this point
+    return 0;    //Success
+}
+
+uint8_t ctrl_turnOffSpeedControl(void) {
+    ctrl_usingSpeedControl = false;
     return 0;    //Success
 }
 
 uint8_t ctrl_setThrottle(uint16_t desired_throttle) {
     //Reasons this CANNOT be set:
     //      (1) motor is in safety shutdown
-    //      (2) motor is NOT armed (has not started)
-    //      (3) throttle value is out of operational range (0-4096) (operational range matches to 12-bit ADC resolution)
-    if          (ctrl_safety_shutdown > 0) { return 1; }
-    else if     (!(ctrl_isArmed())) { return 2; }
-    else if     (desired_throttle > 4096) { return 3; }
+    //      (2) throttle value is out of operational range (0-4096) (operational range matches to 12-bit ADC resolution)
+    if          ((ctrl_safety_shutdown > 0) && (ctrl_safety_shutdown != ctrl_ERROR_NONZERO_START_THROTTLE)) { return 1; }   //must make an exception for the NONZERO STARTING THROTTLE SETTING
+    else if     (desired_throttle > 4096) { return 2; }
 
     //If execution reaches this point, then the new throttle can take effect:
     ctrl_throttle = desired_throttle;
@@ -286,12 +288,12 @@ void init_control_subsystem(void) {
         ctrl_tempC      = ctrl_OVERTEMP_THRESHOLD_F-1.0;
     
         ctrl_direction_command = 0x01;              //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
-        ctrl_mc_armed = true;                       //Set to true after the motor passes startup safety checks (including throttle == 0) AND direction is 0b10 or 0b01
+        ctrl_mc_armed = true;                      //Set to true after the motor passes startup safety checks (including throttle == 0) AND direction is 0b10 or 0b01
                                                     //Set to false after the direction changes to 0b00 or 0b11
-        ctrl_speed_control_duty_raw = 2047;         //2047 = 50%
-        ctrl_speedSetting_mph = 12;                 //Set to non-zero (and between the min and max thresholds (10-55 mph at time of writing)) to activate speed control.
+        ctrl_speed_control_duty_raw = 2047;            //2047 = 50%
+        ctrl_speedSetting_mph = 22.0;                  //Set to non-zero (and between the min and max thresholds (10-55 mph at time of writing)) to activate speed control.
         ctrl_usingSpeedControl = true;                   
-        ctrl_throttle = 1000;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
+        ctrl_throttle = 1027;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
         
         #ifdef _CTRL_ITF_SYSTEM_TEST_
             ctrl_curB       = -10.2;
@@ -464,10 +466,10 @@ void ctrl_alignOutputToHall(void) {
         //ALSO: Handle wrap around of the cur_table_index
         if (ctrl_direction_command == 0x01) {
             ctrl_cur_output_index = ctrl_cur_input_index + 1;
-            if (ctrl_cur_output_index == 6) { ctrl_cur_output_index = 0; }
-        } else if (ctrl_direction_command == 0x10) {
+            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index = 0; }
+        } else if (ctrl_direction_command == 0x02) {
             ctrl_cur_output_index = ctrl_cur_input_index - 1;
-            if (ctrl_cur_output_index == 255) { ctrl_cur_output_index = 5; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
+            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index = 5; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
         }
 
         //Determine what the next hall state should look like
@@ -513,15 +515,15 @@ void ctrl_operational_task(void *arg) {
         if(update_timer_alarmed) {
             //STARTUP SECTION
             if (!ctrl_mc_armed) {
-
+                //Check for nonzero starting throttle
                 if (!(ctrl_throttle == 0)) {
+                    if (ctrl_safety_shutdown != ctrl_ERROR_NONZERO_START_THROTTLE) { ESP_LOGE(TAG_CTRL, "ERROR: NONZERO STARTING THROTTLE (%d)", ctrl_throttle); }
                     ctrl_safety_shutdown = ctrl_ERROR_NONZERO_START_THROTTLE;
-                    ESP_LOGE(TAG_CTRL, "ERROR: NONZERO STARTING THROTTLE (%d)", ctrl_throttle);
 
                 //Check for hall sensor wiring issues
-                } else if ((ctrl_hall_state == 7) || (ctrl_hall_state == 0)) {
+                } else if (((ctrl_hall_state == 7) || (ctrl_hall_state == 0))) {
+                    if (ctrl_safety_shutdown != ctrl_ERROR_HALL_WIRE) { ESP_LOGE(TAG_CTRL, "ERROR: HALL WIRING ISSUE (digital '000' or '111')(%d)", ctrl_hall_state); }
                     ctrl_safety_shutdown = ctrl_ERROR_HALL_WIRE;
-                    ESP_LOGE(TAG_CTRL, "ERROR: HALL WIRING ISSUE (digital '000' or '111')(%d)", ctrl_hall_state);
 
                 //Ensure the battery is neither overvoltage nor undervoltage
                 } else if (ctrl_batVolt < ctrl_UNDERVOLTAGE_THRESHOLD_V) {
@@ -531,12 +533,12 @@ void ctrl_operational_task(void *arg) {
                     ctrl_safety_shutdown = ctrl_ERROR_BAT_OVERVOLT;
                     ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERVOLTAGE (%f)", ctrl_batVolt);
 
-                //If the above tests have passed and the direction command is in forward or backward state, allow motor to run.
+                //If the above tests have passed, then there is no safety issue indicated at this time
                 } else {
-                    
+                    ctrl_safety_shutdown = 0;                    
+                    //If the direction command is in forward or backward state, allow motor to run.
                     if((ctrl_direction_command == 0b01) || (ctrl_direction_command == 0b10)) {
                         ctrl_mc_armed = true;
-                        ctrl_safety_shutdown = false;
                         ctrl_alignOutputToHall();   //must align output to hall
                         ESP_LOGI(TAG_CTRL, "*****MOTOR ARMED*****");
                     } else {
@@ -586,8 +588,7 @@ void ctrl_operational_task(void *arg) {
                 //Ensure heat sink temperature has not exceeded safety threshold
                 } else if ((ctrl_tempA > ctrl_OVERTEMP_THRESHOLD_F) || (ctrl_tempB > ctrl_OVERTEMP_THRESHOLD_F) || (ctrl_tempC > ctrl_OVERTEMP_THRESHOLD_F)) {
                     ctrl_safety_shutdown = ctrl_ERROR_OVERHEAT;
-                    ESP_LOGE(TAG_CTRL, "ERROR: MOSFET OVERHEAT (%f\t%f\t%f)", ctrl_tempA, ctrl_tempB, ctrl_tempC);
-                    
+                    ESP_LOGE(TAG_CTRL, "ERROR: MOSFET OVERHEAT (%f\t%f\t%f)", ctrl_tempA, ctrl_tempB, ctrl_tempC);                    
                 }
 
                 //Now handle any error that occured
@@ -595,7 +596,6 @@ void ctrl_operational_task(void *arg) {
                     //Push 0 output to all MOSFET outputs using the set_MSFTOutput() function IMMEDIATELY
                     ctrl_set_MSFTOutput(6);
                     ESP_LOGI(TAG_CTRL, "*****MOTOR DISARMED (SAFETY)*****");
-                    itf_displayHex(ctrl_safety_shutdown);
 
                 //If the direction bits indicate the motor should disengage, do so now
                 } else if ((ctrl_direction_command == 0b00) || (ctrl_direction_command == 0b11)) {
@@ -604,10 +604,8 @@ void ctrl_operational_task(void *arg) {
                     ctrl_mc_armed = false;
                     ctrl_alignOutputToHall();   //must align output to hall
                     ESP_LOGI(TAG_CTRL, "*****MOTOR DISARMED (NORMAL)*****");
-                    itf_displayHex(0);
 
                 } else {
-                    itf_displayHex(0);
                     
                     /* 
                         If the program reaches this point in execution, we know:
@@ -646,15 +644,15 @@ void ctrl_operational_task(void *arg) {
 
                     //Update speed control
                     if (ctrl_usingSpeedControl) {
-                        float error = ctrl_speedSetting_mph - ctrl_speed_mph;
-                        ctrl_speed_control_duty_final = ctrl_speed_control_duty_raw + ((uint16_t)((error)*ctrl_SPDCTRL_PGAIN));
+                        double error = ctrl_speedSetting_mph - ctrl_speed_mph;
+                        ctrl_speed_control_duty_final = ctrl_speed_control_duty_raw + ((uint16_t)(error*ctrl_SPDCTRL_PGAIN));
                         //Perform min/max control
-                        //if (ctrl_speed_control_duty_final < 0.0)      { ctrl_speed_control_duty_final = 0.0; }    //doesn't work with uint
-                        if (ctrl_speed_control_duty_final > 32000.0)   { ctrl_speed_control_duty_final = 0.0; }    //Better way to handle uint overflow from substraction
-                        if (ctrl_speed_control_duty_final > 4095.0)   { ctrl_speed_control_duty_final = 4095.0; }
+                        if (ctrl_speed_control_duty_final > 16000)      { ctrl_speed_control_duty_final = 0; }    //Better way to handle uint overflow from substraction
+                        if (ctrl_speed_control_duty_final > 4095)       { ctrl_speed_control_duty_final = 4095; }
                     }
                 }
             }
+            itf_displayHex(ctrl_safety_shutdown);   //lastly, update the hex display
         } //END if(update_timer_alarmed)
     }
 }
