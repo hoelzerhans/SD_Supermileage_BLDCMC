@@ -9,7 +9,6 @@
 #include "esp_timer.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
-
 #include "itf_seven_seg.h"
 
 #include <time.h>
@@ -54,6 +53,7 @@ uint8_t ctrl_setDirection(uint8_t new_direction);
 uint8_t ctrl_turnOffSpeedControl(void) ;
 
 
+
 //******************************************************     PROTOTYPES    ******************************************************
 //SETS UP AND RUNS ALL CONTROL SUSTEM CODE
 void init_control_subsystem(void);
@@ -67,7 +67,9 @@ void ctrl_operational_task(void *arg);         //ctrl_operational_task() is a ta
 
 //FUNCTIONS:
 void ctrl_alignOutputToHall(void);      //ctrl_alignOutputToHall() aligns the cur_input_index, cur_output_index, and expected_hall_state to match to the most recently read hall_state (also takes direction into account for the expected_hall_state)
+
 uint8_t ctrl_getHallState(void);           //ctrl_getHallState() reads the hall sensor pins and updates the hall_state variable.
+
 void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use);    //ctrl_set_MSFTOutput() sets all of the MOSFET output signals to match the given index in the output_table. Also responsible for enforcing safety_shutdown as well as considering whether or not run_motor is good to go
 
 //SETUP (ONE-TIME) FUNCTIONS:
@@ -75,7 +77,9 @@ void ctrl_setup_Output(void);
 void ctrl_setup_Hall(void);     //ctrl_setup_Hall() sets up the pins and associated interrupts to start monitoring the hall effect sensor states. ALSO: gets the starting hall_state and aligns the output to it
 
 //SPECIAL OBJECTS:
+
 //esp_timer_handle_t ctrl_speed_control_timer;    //The timer handle used to apply speed control at a regular interval
 //TaskHandle_t ctrl_operational_task_handle;      //Handle for the operational task of the control subsystem
+
 
 #endif
