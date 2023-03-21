@@ -1,3 +1,6 @@
+#ifndef ITF_COM_FUNCS_H_
+#define ITF_COM_FUNCS_H_
+
 int itf_decodePC(uint8_t* str);
 int itf_checkCRC(int message);
 int itf_addCRC(int message);
@@ -9,7 +12,11 @@ int itf_sendDataMCU(const char* data);
 void itf_dirHandler(void *arg);
 void itf_initDirPins(void);
 int itf_crc4AndSend(int message);
+void PCComTask(void * params);
+void MCUComTask(void * params);
 
 extern int itf_dirInput1;
 extern int itf_dirInput0;
 extern int itf_speedLocked;
+
+#endif

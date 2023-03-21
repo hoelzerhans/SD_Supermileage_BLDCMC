@@ -6,6 +6,7 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
+/*
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -130,3 +131,4 @@ void app_main_dummy(void)
     //xTaskCreate(writeHexTask,"HexTask",1024*20,NULL,configMAX_PRIORITIES,NULL);\]
     //int xd = itf_businit;
 }
+*/
