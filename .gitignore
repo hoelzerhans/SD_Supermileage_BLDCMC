@@ -5,3 +5,4 @@ main/testMain.c
 .vscode/c_cpp_properties.json
 .gitignore
 .vscode/settings.json
+/.vscode
