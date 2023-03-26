@@ -16,7 +16,6 @@
 #include "itf_com_funcs.h"
 #include "itf_sd_card_writer.h"
 #include "itf_sd_card_setup.h"
-#include "continuous_read_adc.h"
 
 //#ifndef CTRL_SUBSYSTEM_H_
 //#include "ctrl_subsystem.h"
@@ -35,11 +34,9 @@ void app_main(void)
     itf_initDirPins();
     itf_initHex();
     init_control_subsystem();
-    ADC_RUN();
+    
     xTaskCreate(PCComTask,"PCTask",1024*20,NULL,configMAX_PRIORITIES-1,NULL);
     xTaskCreate(MCUComTask,"MCUTask",1024*20,NULL,configMAX_PRIORITIES,NULL);
     xTaskCreatePinnedToCore(itf_writeSD_task,"SDTask",1024*50,NULL,configMAX_PRIORITIES-2,NULL,0);
-    
-
 
 }
