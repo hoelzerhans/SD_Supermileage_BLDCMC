@@ -11,7 +11,6 @@
 #include "math.h"
 #include <stdlib.h>
 #include "driver/gpio.h"
-
 //#include "continuous_read_adc.h"
 
 //PROCESSED SENSOR VALUE
