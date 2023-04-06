@@ -184,7 +184,7 @@ void continuous_adc_print_task(void *arg) {
     while(1) {
          
         //ESP_LOGI(TAG, "voltage: %f\tActual Voltage: %f", proc_voltage,actual_voltage);
-        ESP_LOGI(TAG, "voltage a %f\tCurrent a%f", Raw_a_voltage,CurrentA);
+        ESP_LOGI(TAG, "voltage a %f\tCurrent a %f", Raw_a_voltage,CurrentA);
         //ESP_LOGI(TAG, "voltage b %f\tCurrent b%f", Raw_b_voltage,CurrentB);
         //ESP_LOGI(TAG, "voltage c %f\tCurrent c%f", Raw_c_voltage,CurrentC);
         //ESP_LOGI(TAG, " Temperature a in K : %f\tTemperature a in F: %f",TK1,TF1 );
