@@ -4,13 +4,13 @@
 #include "itf_seven_seg.h"
 
 #ifndef ITF_HEX_DEFINES
-    #define ITF_A_PIN 9 //WAS 7
-    #define ITF_B_PIN 13 //WAS 15
-    #define ITF_C_PIN 14 //WAS 16
-    #define ITF_D_PIN 17
-    #define ITF_E_PIN 18
-    #define ITF_F_PIN 8
-    #define ITF_G_PIN 3
+    #define ITF_A_PIN 40 //WAS 7
+    #define ITF_B_PIN 39 //WAS 15
+    #define ITF_C_PIN 38 //WAS 16
+    #define ITF_D_PIN 37
+    #define ITF_E_PIN 36
+    #define ITF_F_PIN 42
+    #define ITF_G_PIN 41
 #endif
 
 void itf_displayHex(int num);
