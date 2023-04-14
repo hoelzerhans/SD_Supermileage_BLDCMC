@@ -11,10 +11,10 @@
 #include "itf_master_defines.h"
 
 #ifndef ITF_COM_DEFINES
-    #define ITF_TX_PIN_UART1 4
-    #define ITF_RX_PIN_UART1 5
-    #define ITF_DIR0_PIN 19
-    #define ITF_DIR1_PIN 20
+    #define ITF_TX_PIN_UART1 21
+    #define ITF_RX_PIN_UART1 8//CHANGE SOON
+    #define ITF_DIR0_PIN 2
+    #define ITF_DIR1_PIN 1
     #define ITF_RX_BUF_SIZE_UART0 1024
     #define ITF_TX_BUF_SIZE_UART0 1024
     #define ITF_RX_BUF_SIZE_UART1 1024

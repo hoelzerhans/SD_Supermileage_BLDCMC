@@ -22,10 +22,10 @@ static const char *TAG = "SD_Setup";
     #define ITF_MOUNT_POINT_DEF "/sdcard"
     #define ITF_SD_WRITE_SIZE 1024 //Power of 2 Pref (1024, 512, ect)
 
-    #define ITF_SD_MISO_PIN  37
-    #define ITF_SD_MOSI_PIN  35
-    #define ITF_SD_CLK_PIN   36
-    #define ITF_SD_CS_PIN    38
+    #define ITF_SD_MISO_PIN  47
+    #define ITF_SD_MOSI_PIN  45
+    #define ITF_SD_CLK_PIN   48
+    #define ITF_SD_CS_PIN    0
 #endif
 
 //#define SD_PRINTS_DEF in main to enable prints
