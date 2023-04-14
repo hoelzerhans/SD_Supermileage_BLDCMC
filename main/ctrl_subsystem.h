@@ -53,6 +53,13 @@ uint8_t ctrl_setDirection(uint8_t new_direction);
 
 uint8_t ctrl_turnOffSpeedControl(void) ;
 
+uint8_t ctrl_setBatVolts(double new_voltage);
+uint8_t ctrl_setTempA(double new_temp);
+uint8_t ctrl_setTempB(double new_temp);
+uint8_t ctrl_setTempC(double new_temp);
+uint8_t ctrl_setCurA(double new_cur);
+uint8_t ctrl_setCurB(double new_cur);
+uint8_t ctrl_setCurC(double new_cur);
 
 //******************************************************     PROTOTYPES    ******************************************************
 //SETS UP AND RUNS ALL CONTROL SUSTEM CODE

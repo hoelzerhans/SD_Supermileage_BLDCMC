@@ -10,6 +10,8 @@
 #include "itf_seven_seg.h"
 #include "itf_sd_card_writer.h"
 #include <time.h>
+#include "continuous_read_adc.h"
+
 
 
 
@@ -37,17 +39,17 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 
 //******************************************************     PINS     ******************************************************
 //These are the output pins for the motor driving logic:
-#define ctrl_MSFT_AL 4
-#define ctrl_MSFT_AH 5
-#define ctrl_MSFT_BL 6
-#define ctrl_MSFT_BH 7
-#define ctrl_MSFT_CL 15
-#define ctrl_MSFT_CH 16
+#define ctrl_MSFT_AL 6
+#define ctrl_MSFT_AH 7
+#define ctrl_MSFT_BL 15
+#define ctrl_MSFT_BH 16
+#define ctrl_MSFT_CL 4
+#define ctrl_MSFT_CH 5
 
 //These are the input pins for the hall effect sensors:
-#define ctrl_HA_IN 42
-#define ctrl_HB_IN 41
-#define ctrl_HC_IN 40
+#define ctrl_HA_IN 10
+#define ctrl_HB_IN 9
+#define ctrl_HC_IN 3
 
 
 
@@ -206,6 +208,43 @@ uint8_t ctrl_getErrorCode(void)         { return ctrl_safety_shutdown; }        
 uint64_t ctrl_getTime(void)             { return esp_timer_get_time(); }
 
 //******************************* SET functions (Return 0 on **SUCCESS**)
+
+
+uint8_t ctrl_setBatVolts(double new_voltage) {
+    ctrl_batVolt = new_voltage;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setTempA(double new_temp) {
+    ctrl_tempA = new_temp;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setTempB(double new_temp) {
+    ctrl_tempB = new_temp;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setTempC(double new_temp) {
+    ctrl_tempC = new_temp;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setCurA(double new_cur) {
+    ctrl_curA = new_cur;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setCurB(double new_cur) {
+    ctrl_curB = new_cur;
+    return 0;    //Success
+}
+
+uint8_t ctrl_setCurC(double new_cur) {
+    ctrl_curC = new_cur;
+    return 0;    //Success
+}
+
 uint8_t ctrl_setSpeedControl(float target_mph) {
     //Reasons this CANNOT be set:
     //      (1) motor is in safety shutdown
