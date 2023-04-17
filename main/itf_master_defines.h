@@ -29,9 +29,9 @@
 
 #define ITF_A_PIN 40 //WAS 7
 #define ITF_B_PIN 39 //WAS 15
-#define ITF_C_PIN 38 //WAS 16
+#define ITF_C_PIN 36 //WAS 38
 #define ITF_D_PIN 37
-#define ITF_E_PIN 36
+#define ITF_E_PIN 38
 #define ITF_F_PIN 42
 #define ITF_G_PIN 41
 
