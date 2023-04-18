@@ -32,7 +32,8 @@
 void app_main(void)
 {
     itf_initDirPins();
-    itf_initHex();
+    itf_initHex();  
+    itf_displayHex(10);
     init_control_subsystem();
     
     xTaskCreate(PCComTask,"PCTask",1024*20,NULL,configMAX_PRIORITIES-1,NULL);

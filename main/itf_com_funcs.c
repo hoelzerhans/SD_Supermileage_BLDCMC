@@ -11,10 +11,10 @@
 #include "itf_master_defines.h"
 
 #ifndef ITF_COM_DEFINES
-    #define ITF_TX_PIN_UART1 4
-    #define ITF_RX_PIN_UART1 5
-    #define ITF_DIR0_PIN 19
-    #define ITF_DIR1_PIN 20
+    #define ITF_TX_PIN_UART1 35
+    #define ITF_RX_PIN_UART1 8//CHANGE SOON
+    #define ITF_DIR0_PIN 2
+    #define ITF_DIR1_PIN 1
     #define ITF_RX_BUF_SIZE_UART0 1024
     #define ITF_TX_BUF_SIZE_UART0 1024
     #define ITF_RX_BUF_SIZE_UART1 1024
@@ -343,7 +343,7 @@ void itf_initDirPins(void){
     //gpio_isr_register(dir1Handler, "Args", 0, NULL);
     itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
     ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
-
+    ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
     gpio_install_isr_service(0);
     gpio_isr_handler_add(ITF_DIR0_PIN, itf_dirHandler, (void*) ITF_DIR0_PIN);
     gpio_isr_handler_add(ITF_DIR1_PIN, itf_dirHandler, (void*) ITF_DIR1_PIN);
@@ -354,9 +354,9 @@ void itf_dirHandler(void *arg){
     itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
     //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
     ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
-
+    //ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
     #ifdef COM_PRINT_DEF
-        ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
+       // ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
     #endif
     return;
 }

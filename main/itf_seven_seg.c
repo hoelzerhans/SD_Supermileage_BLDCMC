@@ -4,13 +4,13 @@
 #include "itf_seven_seg.h"
 
 #ifndef ITF_HEX_DEFINES
-    #define ITF_A_PIN 9 //WAS 7
-    #define ITF_B_PIN 13 //WAS 15
-    #define ITF_C_PIN 14 //WAS 16
-    #define ITF_D_PIN 17
-    #define ITF_E_PIN 18
-    #define ITF_F_PIN 8
-    #define ITF_G_PIN 3
+    #define ITF_A_PIN 40
+    #define ITF_B_PIN 39
+    #define ITF_C_PIN 36 
+    #define ITF_D_PIN 37
+    #define ITF_E_PIN 38
+    #define ITF_F_PIN 42
+    #define ITF_G_PIN 41
 #endif
 
 void itf_displayHex(int num);
@@ -28,15 +28,29 @@ void itf_initHex(void){
         //set as output mode
         io_conf.mode = GPIO_MODE_OUTPUT;
         //bit mask of the pins that you want to set,e.g.GPIO18/19
-        io_conf.pin_bit_mask = (1<<gpioNum);//GPIO X
+        uint64_t bitMask = (((uint64_t)1)<<gpioNum);
+        io_conf.pin_bit_mask = bitMask;//GPIO X
+        //io_conf.pin_bit_mask = (1<<gpioNum);
         //disable pull-down mode
         io_conf.pull_down_en = 0;
         //disable pull-up mode
         io_conf.pull_up_en = 0;
         //configure GPIO with the given settings
         gpio_config(&io_conf);
-        gpio_set_level(gpioNum,0);
+        gpio_set_level(gpioNum,1);
+
+        //GPIO_MODE_
+        //gpio_set_pull_mode(gpioNum,GPIO_PULLDOWN_DISABLE);
+        //gpio_set_pull_mode(gpioNum,GPIO_PULLUP_DISABLE);
+        //gpio_set_direction(gpioNum,GPIO_MODE_OUTPUT);
+        //gpio_set_level(gpioNum,1);
+        //gpio_set_level(gpioNum,0);
+        //gpio_drive_cap_t s;
+        //GPIO_DRIVE_CAP_1
+        //gpio_get_drive_capability(gpioNum,&s);
+        //ESP_LOGI("Setpin:","Pin %d",gpioNum);
     }
+    ESP_LOGI("Hex","Init!");
 }
 
 //Write a number between 0 and 15 to the seven segment
@@ -69,7 +83,12 @@ void itf_displayHex(int num){
     for(p=0;p<7;p++){
         int gpioNum = segPinArray[6-p];
         int state = segLUT[num] & (1<<(p+1));
+        if(state > 0){
+            state = 1;
+        }
         gpio_set_level(gpioNum,state);
+        //ESP_LOGI("SetDisp:","Pin %d, Set %d",gpioNum,state);
+        //ESP_LOGI("SetDisp:","Pin %d, Got %d",gpioNum,gpio_get_level(gpioNum));
     }
 
 }

@@ -37,17 +37,17 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 
 //******************************************************     PINS     ******************************************************
 //These are the output pins for the motor driving logic:
-#define ctrl_MSFT_AL 4
-#define ctrl_MSFT_AH 5
-#define ctrl_MSFT_BL 6
-#define ctrl_MSFT_BH 7
-#define ctrl_MSFT_CL 15
-#define ctrl_MSFT_CH 16
+#define ctrl_MSFT_AL 6
+#define ctrl_MSFT_AH 7
+#define ctrl_MSFT_BL 15
+#define ctrl_MSFT_BH 16
+#define ctrl_MSFT_CL 4
+#define ctrl_MSFT_CH 5
 
 //These are the input pins for the hall effect sensors:
-#define ctrl_HA_IN 42
-#define ctrl_HB_IN 41
-#define ctrl_HC_IN 40
+#define ctrl_HA_IN 10
+#define ctrl_HB_IN 9
+#define ctrl_HC_IN 3
 
 
 
@@ -652,7 +652,7 @@ void ctrl_operational_task(void *arg) {
                     }
                 }
             }
-            itf_displayHex(ctrl_safety_shutdown);   //lastly, update the hex display
+            itf_displayHex(ctrl_safety_shutdown);   //lastly, update the hex display REENABLE
         } //END if(update_timer_alarmed)
     }
 }
