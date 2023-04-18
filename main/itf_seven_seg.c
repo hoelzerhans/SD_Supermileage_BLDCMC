@@ -28,7 +28,9 @@ void itf_initHex(void){
         //set as output mode
         io_conf.mode = GPIO_MODE_OUTPUT;
         //bit mask of the pins that you want to set,e.g.GPIO18/19
-        io_conf.pin_bit_mask = (1<<gpioNum);//GPIO X
+        //io_conf.pin_bit_mask = (1<<gpioNum);//GPIO X
+        uint64_t bitMask = (((uint64_t) 1)<<gpioNum);
+        io_conf.pin_bit_mask = bitMask;
         //disable pull-down mode
         io_conf.pull_down_en = 0;
         //disable pull-up mode
