@@ -11,6 +11,7 @@
 #include "esp_chip_info.h"
 #include "esp_flash.h"
 
+
 #include "ctrl_subsystem.h"
 #include "itf_seven_seg.h"
 #include "itf_com_funcs.h"
@@ -29,6 +30,7 @@
 
 
 
+
 void app_main(void)
 {
     itf_initDirPins();
@@ -40,4 +42,5 @@ void app_main(void)
     xTaskCreate(MCUComTask,"MCUTask",1024*20,NULL,configMAX_PRIORITIES,NULL);
     xTaskCreatePinnedToCore(itf_writeSD_task,"SDTask",1024*50,NULL,configMAX_PRIORITIES-2,NULL,0);
 
+    //init_control_subsystem();   //Single line to initialize and run the control subsystem. Comment out when not needed.
 }
