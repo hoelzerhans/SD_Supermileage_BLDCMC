@@ -40,5 +40,7 @@ void app_main(void)
     xTaskCreate(PCComTask,"PCTask",1024*20,NULL,configMAX_PRIORITIES-1,NULL);
     xTaskCreate(MCUComTask,"MCUTask",1024*20,NULL,configMAX_PRIORITIES,NULL);
     xTaskCreatePinnedToCore(itf_writeSD_task,"SDTask",1024*50,NULL,configMAX_PRIORITIES-2,NULL,0);
+    ctrl_turnOffSpeedControl();
+    //ctrl_setThrottle(1000);
     ADC_RUN();
 }

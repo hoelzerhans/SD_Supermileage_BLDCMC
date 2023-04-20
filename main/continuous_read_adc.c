@@ -104,8 +104,9 @@ void continuous_adc_results_task(void *arg) {
 
 
                     }else if (p->type2.channel == 6) {
-                       // throttle = p->type2.data;  ////GPIO17  used for Speed control 
-                       ctrl_setThrottle(p->type2.data);
+                       int throttle = p->type2.data;  ////GPIO17  used for Speed control 
+                       //ctrl_setThrottle(p->type2.data);
+                       ctrl_setThrottle(throttle);
 
                     //---------------------------------------------------------------------------------------//
                     }else if (p->type2.channel == 3) {  ///GPIO 14                    
@@ -194,13 +195,13 @@ void continuous_adc_print_task(void *arg) {
     while(1) {
          
         //ESP_LOGI(TAG, "voltage: %f\tActual Voltage: %f", proc_voltage,actual_voltage);
-        ESP_LOGI(TAG, "voltage a %f\tCurrent a %f", Raw_a_voltage,CurrentA);
+        //ESP_LOGI(TAG, "voltage a %f\tCurrent a %f", Raw_a_voltage,CurrentA);
         //ESP_LOGI(TAG, "voltage b %f\tCurrent b%f", Raw_b_voltage,CurrentB);
         //ESP_LOGI(TAG, "voltage c %f\tCurrent c%f", Raw_c_voltage,CurrentC);
         //ESP_LOGI(TAG, " Temperature a in K : %f\tTemperature a in F: %f",TK1,TF1 );
         //ESP_LOGI(TAG, " Temperature b in K : %f\tTemperature b in F: %f",TK2,TF2 );
         //ESP_LOGI(TAG, " Temperature c in K : %f\tTemperature c in F: %f",TK3,TF3 );
-        vTaskDelay(250);
+        vTaskDelay(2500);
     }    
 }
 
