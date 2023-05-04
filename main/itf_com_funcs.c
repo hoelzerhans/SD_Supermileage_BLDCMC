@@ -9,6 +9,7 @@
 #include "ctrl_subsystem.h"
 //#endif
 #include "itf_master_defines.h"
+#include "continuous_read_adc.h"
 
 #ifndef ITF_COM_DEFINES
     #define ITF_TX_PIN_UART1 21
@@ -32,7 +33,7 @@ static const int ITF_TX_BUF_SIZE_UART1 = 1024;
 
 int itf_dirInput0 = -1;
 int itf_dirInput1 = -1;
-int itf_speedLocked = 0;    //CALEB: Could you tell me more about this variable at some point?
+int itf_speedLocked = 1;    //CALEB: Could you tell me more about this variable at some point?
 
 
 int itf_decodePC(uint8_t* str);
@@ -194,6 +195,8 @@ int itf_actOnMessage(int message,int source){
                 result = ctrl_setThrottle(((uint16_t)(packetDATA*16)));
                 ESP_LOGI("Response","Set throttle to %d",packetDATA*16);
                 if(result) { ESP_LOGI("Response","Variable set attempt FAILED"); }
+            }else{
+                ESP_LOGI("Response","Software Throttle is locked");
             }
             break;
         case 1: //Speed set mph
@@ -205,13 +208,18 @@ int itf_actOnMessage(int message,int source){
                 ESP_LOGI("Response","Set MPH to %f",mphCalc);
                 if(result) { ESP_LOGI("Response","Variable set attempt FAILED"); }
             }else{
-                ESP_LOGI("Response","Speed is locked");
+                ESP_LOGI("Response","Software Speed set is locked");
             }
             break;
-        case 2: //Enable/disable speed set
+        case 2: //Enable/disable speed set SOFTWARE SPEED CONTROL
             //Lock/Unlock
             itf_speedLocked = (packetDATA > 0);//1 = locked, 0 = unlocked
-            ESP_LOGI("Response","Set speedLock to %d",itf_speedLocked);
+            if(itf_speedLocked > 0){
+                sensing_setEnableADCThrottle(1);
+            }else{
+                sensing_setEnableADCThrottle(0);
+            }
+            ESP_LOGI("Response","Set speedLock to %d PS: 0 means SOFTWARE control, 1 means ADC control",itf_speedLocked);
             break;
         case 3: //Dir set & dir lock
             //unlock/lock and set dir

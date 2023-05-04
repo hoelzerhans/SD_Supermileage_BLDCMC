@@ -63,6 +63,9 @@ double last_a_Avg =0.0;
 double last_b_Avg =0.0;
 double last_c_Avg =0.0;
 
+//Interfacing system variable to disable throttle setting
+int adcThrottle_enabled = 1;
+
 //This handle is used to control the continuous ADC instance
 adc_continuous_handle_t continuous_adc_handle = NULL;
 //This task is where continuous ADC results are read once notified that the conversions are complete
@@ -72,6 +75,9 @@ static adc_channel_t channel[8] = {ADC_CHANNEL_7, ADC_CHANNEL_0, ADC_CHANNEL_1, 
 //Used for some logging, could be removed if logging statements are also removed
 static const char *TAG = "";
 
+void sensing_setEnableADCThrottle(int enabled){
+    adcThrottle_enabled = enabled;
+}
 
 //This callback informs the continuous_adc_results_task that there are new ADC results to read
 static bool IRAM_ATTR sensing_adc_conversion_done(adc_continuous_handle_t handle, const adc_continuous_evt_data_t *edata, void *user_data)
@@ -106,7 +112,9 @@ void continuous_adc_results_task(void *arg) {
                     }else if (p->type2.channel == 6) {
                        int throttle = p->type2.data;  ////GPIO17  used for Speed control 
                        //ctrl_setThrottle(p->type2.data);
-                       ctrl_setThrottle(throttle);
+                       if(adcThrottle_enabled){
+                        ctrl_setThrottle(throttle);
+                       }
 
                     //---------------------------------------------------------------------------------------//
                     }else if (p->type2.channel == 3) {  ///GPIO 14                    
@@ -224,6 +232,7 @@ void ADC_RUN(void)
     ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &continuous_adc_handle));
     adc_continuous_config_t dig_cfg = {
         .sample_freq_hz = 9 * 8 * 1000,
+        //.sample_freq_hz = 5 * 8 * 1000,
         .conv_mode = ADC_CONV_SINGLE_UNIT_2,  /////This is using the ADC2 for conversion
         .format = ADC_DIGI_OUTPUT_FORMAT_TYPE2,
     };

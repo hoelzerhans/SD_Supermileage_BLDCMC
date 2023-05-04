@@ -13,5 +13,6 @@ void continuous_adc_print_task(void *arg);
 ///Run ADC
 void ADC_RUN(void);
 
+void sensing_setEnableADCThrottle(int enabled);
 
 #endif
