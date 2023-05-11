@@ -124,7 +124,8 @@ void continuous_adc_results_task(void *arg) {
                     last_a_Avg = curr_a_avg;
                     //printf("the value of raw a current is %f\n", raw_a_current);
                     //vTaskDelay(250);
-                    Raw_a_voltage = ((curr_a_avg/4095.0))*5.0; //Calculate the raw voltage      
+                    //Raw_a_voltage = ((curr_a_avg/4095.0))*5.0; //Calculate the raw voltage      
+                    Raw_a_voltage = ((raw_a_current/4095.0))*5.0; //Calculate the raw voltage      
                     CurrentA = (((Raw_a_voltage*1.0615)-2.5)/0.05); 
                          if(CurrentA < 0){   ////futhur callibrate the negative current to make it accurate
                              CurrentA = CurrentA * 0.90;
@@ -223,7 +224,7 @@ void ADC_RUN(void)
     /////It used to obtain handle or while debugging the task. The next parameter 2048 is the memory allocated to the task in word (2 Bytes).
 
     //Start the task that will occasionally print DMA data to console
-    xTaskCreate(continuous_adc_print_task, "continuous_adc_print_task", 4096, NULL, 5, NULL);
+    //xTaskCreate(continuous_adc_print_task, "continuous_adc_print_task", 4096, NULL, 5, NULL);
     //Create and setup the continuous_adc_handle object
     adc_continuous_handle_cfg_t adc_config = {
         .max_store_buf_size = 1024,  
@@ -231,8 +232,9 @@ void ADC_RUN(void)
     };
     ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &continuous_adc_handle));
     adc_continuous_config_t dig_cfg = {
-        .sample_freq_hz = 9 * 8 * 1000,
-        //.sample_freq_hz = 5 * 8 * 1000,
+        //.sample_freq_hz = 8 * 8 * 1000,
+        //.sample_freq_hz = 48 * 1000,
+        .sample_freq_hz = 2* 8 * 1000,
         .conv_mode = ADC_CONV_SINGLE_UNIT_2,  /////This is using the ADC2 for conversion
         .format = ADC_DIGI_OUTPUT_FORMAT_TYPE2,
     };

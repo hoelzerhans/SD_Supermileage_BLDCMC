@@ -43,6 +43,7 @@ bool  ctrl_isArmed(void);
 bool  ctrl_isInSafetyShutdown(void);   //If safety shutdown is anything except 0, system is in safety shutdown
 uint8_t ctrl_getErrorCode(void);           //The value of safety_shutdown IS the error code
 uint64_t ctrl_getTime(void);
+int ctrl_getDirection(void);
 
 //******************************* SET functions (Return 0 on **SUCCESS**)
 uint8_t ctrl_setSpeedControl(float target_mph);

@@ -296,7 +296,9 @@ int itf_actOnMessage(int message,int source){
                 uint8_t data[2] = {(uint8_t) ((message & 0xFF00)>>8),(uint8_t) (message & 0x00FF)};
                 itf_sendDataMCU((char*)data);
             }else{
-                ESP_LOGI(c,"D0=%d   D1=%d",itf_dirInput0,itf_dirInput1);
+                int dir = ctrl_getDirection();
+                ESP_LOGI(c,"D0=%d   D1=%d",(dir & 0b00000010)>>1,(dir & 0b00000001));
+                ESP_LOGI(c,"Dir raw = %d",dir);
                 itf_writeTestMessage("Dir Test Performed via PC \n");
             }
             break;   
@@ -363,9 +365,9 @@ void itf_dirHandler(void *arg){
     //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
     ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
 
-    #ifdef COM_PRINT_DEF
-        ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
-    #endif
+    //#ifdef COM_PRINT_DEF
+    //ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
+    //#endif
     return;
 }
 

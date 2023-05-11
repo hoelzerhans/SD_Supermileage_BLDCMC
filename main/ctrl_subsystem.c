@@ -99,6 +99,7 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 
 //******************************************************     ENUM< STRUCTS, TABLES    ******************************************************
 //Motor driver output table, where bits 5..0 represent CH, CL, BH, BL, AH, AL (in order from highest to lowest)
+/*
 const uint8_t ctrl_output_table[7] = {
     0b00000110, //6     1-(hall)
     0b00100100, //36    3-(hall)
@@ -120,6 +121,32 @@ const uint8_t ctrl_hall_input_table[6] = {
     0b00000100, //4
     0b00000101, //5
 };
+*/
+
+
+const uint8_t ctrl_output_table[7] = {
+    0b00100100, //6     1-(hall)
+    0b00100001, //36    3-(hall)
+    0b00001001, //33    2-(hall)
+    0b00011000, //9     6-(hall)
+    0b00010010, //24    4-(hall)
+    0b00000110, //18    5-(hall)
+    0b00000000  //Here as a safety measure only
+};
+
+//Valid hall effect input table, where each row in this table correlates to the same numbered row in the output_table
+//Note that these items are the ZERO torque hall effect status (final outcome) of applying the motor driving logic in the output_table
+//Therefore, to move forward one would need to move to output_table[row of current hall input state +/- 1] in order to actually move the motor 
+const uint8_t ctrl_hall_input_table[6] = {
+    0b00000011, //3
+    0b00000001,  //1
+    0b00000101, //5
+    0b00000100, //4
+    0b00000110, //6
+    0b00000010 //2
+};
+
+
 
 //This table contains ONLY the specific pin changes that must occur to affect the table. These changes are moving DOWN the output_table
 //This means that if you currently at output_table[5], then you would make the changes from change_table[0] in order to change your
@@ -199,7 +226,7 @@ double ctrl_getPhaseTempB_f(void)        { return ctrl_tempB; }
 double ctrl_getPhaseTempC_f(void)        { return ctrl_tempC; }
 double ctrl_getSpeedSetting_mph(void)    { return ctrl_speedSetting_mph; }           //Speed may be controlled between 10.0 and 55.0 mph
 double ctrl_getThrottle(void)            { return ctrl_throttle; }                   //Throttle may be from 0 to 4096 (0% to 100%)
-
+int ctrl_getDirection(void)              { return ctrl_direction_command; }
 
 
 bool  ctrl_isArmed(void)                { return ctrl_mc_armed; }
@@ -593,14 +620,15 @@ void ctrl_operational_task(void *arg) {
             } else { 
                 //Ensure hall sensor wiring is valid
                 if ((ctrl_hall_state == 7) || (ctrl_hall_state == 0)) {
+                    /*
                     ctrl_safety_shutdown = ctrl_ERROR_HALL_WIRE;
                     ESP_LOGE(TAG_CTRL, "ERROR: HALL WIRING (%d)", ctrl_hall_state);
-                    
+                    */
 
                 //Ensure that there have not been too many commutation errors (likely indicates wiring issue)
-                } else if (ctrl_skipped_commutations > ctrl_SKIPPED_COMMUTATIONS_ERROR_THRESHOLD) {
-                    ctrl_safety_shutdown = ctrl_ERROR_HALL_CHANGE;
-                    ESP_LOGE(TAG_CTRL, "ERROR: TOO MANY HALL SEQUENCE FAILURES (%d). CHECK WIRING AND RESTART", ctrl_skipped_commutations);
+               // } else if (ctrl_skipped_commutations > ctrl_SKIPPED_COMMUTATIONS_ERROR_THRESHOLD) {
+               //     ctrl_safety_shutdown = ctrl_ERROR_HALL_CHANGE;
+               //     ESP_LOGE(TAG_CTRL, "ERROR: TOO MANY HALL SEQUENCE FAILURES (%d). CHECK WIRING AND RESTART", ctrl_skipped_commutations);
                     
 
                 //Ensure the battery is neither overvoltage nor undervoltage
@@ -732,7 +760,7 @@ static void ctrl_hall_isr(void *args)
         itf_addLongData();
     }
     //uint8_t dataToStore[23];
-
+    
 
    // int iPower1 = ctrl_instPower_safe;
     //int iPower = iPower1;

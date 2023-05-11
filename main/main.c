@@ -43,4 +43,5 @@ void app_main(void)
     ctrl_turnOffSpeedControl();
     //ctrl_setThrottle(1000);
     ADC_RUN();
+    
 }
