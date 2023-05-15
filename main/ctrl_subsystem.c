@@ -22,7 +22,7 @@
 //Needs above initailized aswell
 //#define _CTRL_ITF_SYSTEM_TEST_
 
-
+#define CTRL_THROTTLE_DEADZONE_BOTTOM 700   //The throttle ADC value below which the throttle is forced to zero
 
 //******************************************************     GENERAL     ******************************************************
 static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any outgoing serial communication messages from this subsystem.
@@ -300,7 +300,11 @@ uint8_t ctrl_setThrottle(uint16_t desired_throttle) {
     else if     (desired_throttle > 4096) { return 2; }
 
     //If execution reaches this point, then the new throttle can take effect:
-    ctrl_throttle = desired_throttle;
+    if (desired_throttle > CTRL_THROTTLE_DEADZONE_BOTTOM) {
+        ctrl_throttle = desired_throttle;
+    } else {
+        ctrl_throttle = 0;
+    }
     return 0;    //Success
 }
 
@@ -345,8 +349,8 @@ TaskHandle_t ctrl_operational_task_handle;      //Handle for the operational tas
 void init_control_subsystem(void) {
     //Setup variables for testing if _CTRL_SYSTEM_TEST_ is defined
     #ifdef _CTRL_SYSTEM_TEST_
-        ctrl_batVolt    = ctrl_OVERVOLTAGE_THRESHOLD_V-1.0;
-        ctrl_curA       = ctrl_OVERCURRENT_THRESHOLD_A-1.0;
+        ctrl_batVolt    = ctrl_OVERVOLTAGE_THRESHOLD_V-5.0;
+        ctrl_curA       = 0;
         ctrl_curB       = 0;
         ctrl_curC       = 0;
         ctrl_tempA      = ctrl_OVERTEMP_THRESHOLD_F-1.0;
@@ -358,8 +362,8 @@ void init_control_subsystem(void) {
                                                     //Set to false after the direction changes to 0b00 or 0b11
         ctrl_speed_control_duty_raw = 2047;            //2047 = 50%
         ctrl_speedSetting_mph = 22.0;                  //Set to non-zero (and between the min and max thresholds (10-55 mph at time of writing)) to activate speed control.
-        ctrl_usingSpeedControl = true;                   
-        ctrl_throttle = 1027;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
+        ctrl_usingSpeedControl = false;                   
+        ctrl_throttle = 2047;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
         
         #ifdef _CTRL_ITF_SYSTEM_TEST_
             ctrl_curB       = -10.2;
@@ -469,7 +473,8 @@ void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use) {
     if ((ctrl_mc_armed) && (ctrl_safety_shutdown == 0)) {
         //Determine which duty cycle to apply (throttle or speed control).
         uint16_t duty = 0;
-        if (ctrl_usingSpeedControl) { duty = ctrl_speed_control_duty_final; } else { duty = ctrl_throttle; }
+        if (ctrl_usingSpeedControl) { duty = ctrl_speed_control_duty_final; } 
+        else { duty = ctrl_throttle; }
         
         //Set LOWSIDE outputs
         gpio_set_level(ctrl_MSFT_AL, ((ctrl_output_table[output_table_index_to_use] & 0b00000001) >> 0));
@@ -531,11 +536,11 @@ void ctrl_alignOutputToHall(void) {
         //Adjust the commutation table index based on which way we want to turn
         //ALSO: Handle wrap around of the cur_table_index
         if (ctrl_direction_command == 0x01) {
-            ctrl_cur_output_index = ctrl_cur_input_index + 1;
-            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index = 0; }
+            ctrl_cur_output_index = ctrl_cur_input_index + 2;
+            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index -= 6; }
         } else if (ctrl_direction_command == 0x02) {
             ctrl_cur_output_index = ctrl_cur_input_index - 1;
-            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index = 5; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
+            if (ctrl_cur_output_index > 5) { ctrl_cur_output_index += 6; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
         }
 
         //Determine what the next hall state should look like
@@ -642,14 +647,14 @@ void ctrl_operational_task(void *arg) {
                     
 
                 //Ensure total current and phase currents have not exceeded safety thresholds
-                } else if ((ctrl_curA + ctrl_curB + ctrl_curC) > ctrl_TOTAL_OVERCURRENT_THRESHOLD_A) {
-                    ctrl_safety_shutdown = ctrl_ERROR_BAT_CURRENT;
-                    ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERCURRENT (%f). PHASE CURRENTS WERE: %f\t%f\t%f)", (ctrl_curA + ctrl_curB + ctrl_curC), ctrl_curA, ctrl_curB, ctrl_curC);
+                //} else if ((ctrl_curA + ctrl_curB + ctrl_curC) > ctrl_TOTAL_OVERCURRENT_THRESHOLD_A) {
+                //    ctrl_safety_shutdown = ctrl_ERROR_BAT_CURRENT;
+                //    ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERCURRENT (%f). PHASE CURRENTS WERE: %f\t%f\t%f)", (ctrl_curA + ctrl_curB + ctrl_curC), ctrl_curA, ctrl_curB, ctrl_curC);
                     
 
-                } else if ((ctrl_curA > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curB > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curC > ctrl_OVERCURRENT_THRESHOLD_A)) {
-                    ctrl_safety_shutdown = ctrl_ERROR_PHASE_CURRENT;
-                    ESP_LOGE(TAG_CTRL, "ERROR: PHASE OVERCURRENT (%f\t%f\t%f)", ctrl_curA, ctrl_curB, ctrl_curC);
+                //} else if ((ctrl_curA > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curB > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curC > ctrl_OVERCURRENT_THRESHOLD_A)) {
+                //    ctrl_safety_shutdown = ctrl_ERROR_PHASE_CURRENT;
+                //    ESP_LOGE(TAG_CTRL, "ERROR: PHASE OVERCURRENT (%f\t%f\t%f)", ctrl_curA, ctrl_curB, ctrl_curC);
                     
                 
                 //Ensure heat sink temperature has not exceeded safety threshold
@@ -720,6 +725,10 @@ void ctrl_operational_task(void *arg) {
                 }
             }
             itf_displayHex(ctrl_safety_shutdown);   //lastly, update the hex display
+            ctrl_set_MSFTOutput(ctrl_cur_output_index); //This can ensure that throttle updates change the duty cycle of the output MOSFETS - especially when the motor is not turning (yet)
+            ESP_LOGI(TAG_CTRL, "%d", ctrl_throttle);
+            //ESP_LOGI(TAG_CTRL, "%d", ctrl_setThrottle(0));
+            //ctrl_alignOutputToHall();
         } //END if(update_timer_alarmed)
     }
 }

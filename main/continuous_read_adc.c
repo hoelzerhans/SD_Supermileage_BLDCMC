@@ -72,6 +72,7 @@ adc_continuous_handle_t continuous_adc_handle = NULL;
 static TaskHandle_t continuous_adc_results_task_handle = NULL;        
 //These are the ADC channels that will be read (and the order they will be read in)
 static adc_channel_t channel[8] = {ADC_CHANNEL_7, ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, ADC_CHANNEL_3, ADC_CHANNEL_8, ADC_CHANNEL_9, ADC_CHANNEL_6};
+// CH7/18:BATV, CH0/P11:ThermA, CH1/P12:ThermB, CH2/P13:ThermC, CH3/P14:CURA, CH8/P19:CURB, CH9/P20:CURC, CH6/P17:Speed Control
 //Used for some logging, could be removed if logging statements are also removed
 static const char *TAG = "";
 
@@ -103,36 +104,38 @@ void continuous_adc_results_task(void *arg) {
                 for (int i = 0; i < ret_num; i += SOC_ADC_DIGI_RESULT_BYTES) {
                     adc_digi_output_data_t *p = (void*)&result[i];
                     if (p->type2.channel == 7) {
+                        /*
                         raw_voltage = p->type2.data; ////GPIO 18
                         proc_voltage = (3.3333/4095)*(float)raw_voltage; //Example of processing a raw value into a float
                         ctrl_setBatVolts((proc_voltage*270.0)/15.0);
-
-
+                        */
 
                     }else if (p->type2.channel == 6) {
                        int throttle = p->type2.data;  ////GPIO17  used for Speed control 
-                       //ctrl_setThrottle(p->type2.data);
                        if(adcThrottle_enabled){
                         ctrl_setThrottle(throttle);
                        }
 
                     //---------------------------------------------------------------------------------------//
-                    }else if (p->type2.channel == 3) {  ///GPIO 14                    
-                     float curr_a_avg = 0.0;
-                    raw_a_current = p->type2.data;    
-                    curr_a_avg = (raw_a_current*alpha) + ((last_a_Avg)*(1-alpha));
-                    last_a_Avg = curr_a_avg;
-                    //printf("the value of raw a current is %f\n", raw_a_current);
-                    //vTaskDelay(250);
-                    //Raw_a_voltage = ((curr_a_avg/4095.0))*5.0; //Calculate the raw voltage      
-                    Raw_a_voltage = ((raw_a_current/4095.0))*5.0; //Calculate the raw voltage      
-                    CurrentA = (((Raw_a_voltage*1.0615)-2.5)/0.05); 
-                         if(CurrentA < 0){   ////futhur callibrate the negative current to make it accurate
-                             CurrentA = CurrentA * 0.90;
-                         } 
-                    ctrl_setCurA(CurrentA);
+                    }else if (p->type2.channel == 3) {  ///GPIO 14     
+                    /*               
+                        float curr_a_avg = 0.0;
+                        raw_a_current = p->type2.data;    
+                        curr_a_avg = (raw_a_current*alpha) + ((last_a_Avg)*(1-alpha));
+                        last_a_Avg = curr_a_avg;
+                        //printf("the value of raw a current is %f\n", raw_a_current);
+                        //vTaskDelay(250);
+                        //Raw_a_voltage = ((curr_a_avg/4095.0))*5.0; //Calculate the raw voltage      
+                        Raw_a_voltage = ((raw_a_current/4095.0))*5.0; //Calculate the raw voltage      
+                        CurrentA = (((Raw_a_voltage*1.0615)-2.5)/0.05); 
+                            if(CurrentA < 0){   ////futhur callibrate the negative current to make it accurate
+                                CurrentA = CurrentA * 0.90;
+                            } 
+                        ctrl_setCurA(CurrentA);
+                    */
                     //---------------------------------------------------------------------------------------//
                     }else if (p->type2.channel == 8) {
+                        /*
                     
                     float curr_b_avg = 0.0;
                     raw_b_current = p->type2.data;  ////GPIO 19  
@@ -146,32 +149,38 @@ void continuous_adc_results_task(void *arg) {
                              CurrentB = CurrentB * 0.90;
                          } 
                     ctrl_setCurB(CurrentB);
+                    */
                     //----------------------------------------------------------------------------------------//
                     }else if (p->type2.channel == 9) {
-                    float curr_c_avg = 0.0;
-                    raw_c_current = p->type2.data;  ////GPIO 20   
-                    curr_c_avg = (raw_c_current*alpha) + ((last_c_Avg)*(1-alpha));
-                    last_c_Avg = curr_c_avg;
-                    //printf("the value of raw b current is %f\n", raw_b_current);
-                    //vTaskDelay(250);
-                    Raw_c_voltage = ((curr_c_avg/4095.0))*5.0; //Calculate the raw voltage      
-                    CurrentC = (((Raw_c_voltage*1.0615)-2.5)/0.05); 
-                         if(CurrentC < 0){   ////futhur callibrate the negative current to make it accurate
-                             CurrentC = CurrentC * 0.90;
-                         } 
-                    ctrl_setCurC(CurrentC);
+                    /*
+                        float curr_c_avg = 0.0;
+                        raw_c_current = p->type2.data;  ////GPIO 20   
+                        curr_c_avg = (raw_c_current*alpha) + ((last_c_Avg)*(1-alpha));
+                        last_c_Avg = curr_c_avg;
+                        //printf("the value of raw b current is %f\n", raw_b_current);
+                        //vTaskDelay(250);
+                        Raw_c_voltage = ((curr_c_avg/4095.0))*5.0; //Calculate the raw voltage      
+                        CurrentC = (((Raw_c_voltage*1.0615)-2.5)/0.05); 
+                            if(CurrentC < 0){   ////futhur callibrate the negative current to make it accurate
+                                CurrentC = CurrentC * 0.90;
+                            } 
+                        ctrl_setCurC(CurrentC);
+                        */
 
                     }else if (p->type2.channel == 0) {    
+                        /*
                         raw_a_temp = p->type2.data;    /////GPIO 11
                         ThermistorR1 = 9892.0 * ((4095.0/raw_a_temp) -1); ////this formula convert to the real thermistor resistor
-                       float To1 = (1.0/298.15) + (1.0/3950.0)*log(ThermistorR1/100000.00);
+                        float To1 = (1.0/298.15) + (1.0/3950.0)*log(ThermistorR1/100000.00);
                          TK1 = 1/To1; ////This is the temperature in K
                          TC1 = TK1- 273.15; ///Convert to Celcius 
                          TF1 = TC1*1.8 + 32.0;   // convert to Fahrenheit
                          ctrl_setTempA(TF1);
+                         */
 
 
                     }else if (p->type2.channel == 1) {
+                        /*
                         raw_b_temp = p->type2.data;    /////GPIO 12
                         ThermistorR2 = 9892.0 * ((4095.0/raw_b_temp) -1); ////this formula convert to the real thermistor resistor
                        float To2 = (1.0/298.15) + (1.0/3950.0)*log(ThermistorR2/100000.00);
@@ -179,8 +188,10 @@ void continuous_adc_results_task(void *arg) {
                          TC2 = TK2- 273.15; ///Convert to Celcius 
                          TF2 = TC2*1.8 + 32.0;   // convert to Fahrenheit
                          ctrl_setTempB(TF2);
+                         */
 
                     }else if (p->type2.channel == 2) {
+                        /*
                         raw_c_temp = p->type2.data;    /////GPIO 13
                         ThermistorR3 = 9892.0 * ((4095.0/raw_c_temp) -1); ////this formula convert to the real thermistor resistor
                         float To3 = (1.0/298.15) + (1.0/3950.0)*log(ThermistorR3/100000.00);
@@ -188,6 +199,7 @@ void continuous_adc_results_task(void *arg) {
                         TC3 = TK3- 273.15; ///Convert to Celcius 
                         TF3 = TC3*1.8 + 32.0;   // convert to Fahrenheit
                         ctrl_setTempC(TF3);
+                        */
                     };
 
                 }
@@ -232,9 +244,9 @@ void ADC_RUN(void)
     };
     ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &continuous_adc_handle));
     adc_continuous_config_t dig_cfg = {
-        //.sample_freq_hz = 8 * 8 * 1000,
+        .sample_freq_hz = 8 * 8 * 1000,
         //.sample_freq_hz = 48 * 1000,
-        .sample_freq_hz = 2* 8 * 1000,
+        //.sample_freq_hz = 2* 8 * 1000,
         .conv_mode = ADC_CONV_SINGLE_UNIT_2,  /////This is using the ADC2 for conversion
         .format = ADC_DIGI_OUTPUT_FORMAT_TYPE2,
     };
