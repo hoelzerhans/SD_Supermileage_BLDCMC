@@ -17,7 +17,7 @@
 
 
 //Comment out this line when NOT testing
-#define _CTRL_SYSTEM_TEST_
+//#define _CTRL_SYSTEM_TEST_
 //Same here, initizes (somewhat unrealistic) values for everything recorded by SD, for proper testing
 //Needs above initailized aswell
 //#define _CTRL_ITF_SYSTEM_TEST_
@@ -72,13 +72,12 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 //Error codes for the different reasons for safety shutdown to occur:
 #define ctrl_ERROR_HALL_WIRE              0x01
 #define ctrl_ERROR_HALL_CHANGE            0x02
-#define ctrl_ERROR_SENSING_TIMEOUT        0x03
-#define ctrl_ERROR_BAT_UNDERVOLT          0x04
-#define ctrl_ERROR_BAT_OVERVOLT           0x05
-#define ctrl_ERROR_PHASE_CURRENT          0x06
-#define ctrl_ERROR_BAT_CURRENT            0x07
-#define ctrl_ERROR_OVERHEAT               0x08
-#define ctrl_ERROR_NONZERO_START_THROTTLE 0x09
+#define ctrl_ERROR_BAT_UNDERVOLT          0x03
+#define ctrl_ERROR_BAT_OVERVOLT           0x04
+#define ctrl_ERROR_PHASE_CURRENT          0x05
+#define ctrl_ERROR_BAT_CURRENT            0x06
+#define ctrl_ERROR_OVERHEAT               0x07
+#define ctrl_ERROR_NONZERO_START_THROTTLE 0x08
 
 //Safety thresholds (exceeding these will cause one of the error codes above)
 #define ctrl_UNDERVOLTAGE_THRESHOLD_V      38.0
@@ -191,6 +190,7 @@ uint8_t  ctrl_cur_input_index = 0;                  //Used to keep track of what
 uint8_t  ctrl_hall_state = 0x00;                    //Contains the most recently observed hall state
 uint8_t  ctrl_expected_hall_state = 0x00;           //Contains the next hall state that we expect to see based on our latest MOSFET driver output
 uint8_t  ctrl_skipped_commutations = 0x00;          //Tracks the number of incoherent hall state commutations that have been observed since program start.
+uint16_t ctrl_consecutive_good_commutations = 0x00;    //Tracks the number of good commutations. Wipes out bad commutations after enough accumulate.
 
 //Calculated quantities
 double ctrl_speed_mph = 0.0;         //Current ground speed in mph
@@ -199,16 +199,10 @@ double ctrl_avePower = 0.0;          //Average power consumption in watts over t
 double ctrl_totEnergy = 0.0;         //Total energy consumption in Joules
 uint32_t ctrl_runTime = 0.0;        //Total motor running time in milliseconds
 
-//double ctrl_instPower_safe = 0.0; Hans test thing
-
 //Important internal variables
 bool ctrl_usingSpeedControl = false;
 uint32_t ctrl_commutation_counter = 0;
 uint64_t ctrl_commutation_timestamps[3] = {0,0,0};
-
-//HANS TEST VAR
-uint64_t intrTime_test = 0;
-uint64_t intrTime_test_last = 0;
 
 
 //******************************* GET functions
@@ -470,7 +464,7 @@ uint8_t ctrl_getHallState(void) { ctrl_hall_state = (gpio_get_level(ctrl_HC_IN) 
 
 
 void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use) { 
-    if ((ctrl_mc_armed) && (ctrl_safety_shutdown == 0)) {
+    if ((ctrl_mc_armed) && (ctrl_safety_shutdown == 0) && (output_table_index_to_use<6)) {
         //Determine which duty cycle to apply (throttle or speed control).
         uint16_t duty = 0;
         if (ctrl_usingSpeedControl) { duty = ctrl_speed_control_duty_final; } 
@@ -538,13 +532,16 @@ void ctrl_alignOutputToHall(void) {
         if (ctrl_direction_command == 0x01) {
             ctrl_cur_output_index = ctrl_cur_input_index + 2;
             if (ctrl_cur_output_index > 5) { ctrl_cur_output_index -= 6; }
+            //Determine what the next hall state should look like
+            uint8_t next_index = i+1; if (next_index > 5) {next_index = 0;}
+            ctrl_expected_hall_state = ctrl_hall_input_table[next_index];
         } else if (ctrl_direction_command == 0x02) {
             ctrl_cur_output_index = ctrl_cur_input_index - 1;
             if (ctrl_cur_output_index > 5) { ctrl_cur_output_index += 6; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
+            //Determine what the next hall state should look like
+            uint8_t next_index = i-1; if (next_index > 5) {next_index = 5;}
+            ctrl_expected_hall_state = ctrl_hall_input_table[next_index];
         }
-
-        //Determine what the next hall state should look like
-        ctrl_expected_hall_state = ctrl_hall_input_table[ctrl_cur_output_index];
 
         //************************************THIS MAY BE THE ONE PLACE WHERE A SHORT COULD HAPPEN!*****************************************
         //AND that short can only happen if a commutation state was missed
@@ -577,10 +574,6 @@ void ctrl_operational_task(void *arg) {
     static uint32_t update_timer_alarmed;
     while(1)
     {
-        if(intrTime_test != intrTime_test_last){
-            //ESP_LOGI("Testmsg","time: %d",(int)intrTime_test);
-            intrTime_test_last = intrTime_test;
-        }
         //Wake when notified that the update timer has alarmed
         update_timer_alarmed = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         if(update_timer_alarmed) {
@@ -625,15 +618,14 @@ void ctrl_operational_task(void *arg) {
             } else { 
                 //Ensure hall sensor wiring is valid
                 if ((ctrl_hall_state == 7) || (ctrl_hall_state == 0)) {
-                    /*
                     ctrl_safety_shutdown = ctrl_ERROR_HALL_WIRE;
                     ESP_LOGE(TAG_CTRL, "ERROR: HALL WIRING (%d)", ctrl_hall_state);
-                    */
+                    
 
                 //Ensure that there have not been too many commutation errors (likely indicates wiring issue)
-               // } else if (ctrl_skipped_commutations > ctrl_SKIPPED_COMMUTATIONS_ERROR_THRESHOLD) {
-               //     ctrl_safety_shutdown = ctrl_ERROR_HALL_CHANGE;
-               //     ESP_LOGE(TAG_CTRL, "ERROR: TOO MANY HALL SEQUENCE FAILURES (%d). CHECK WIRING AND RESTART", ctrl_skipped_commutations);
+                } else if (ctrl_skipped_commutations > ctrl_SKIPPED_COMMUTATIONS_ERROR_THRESHOLD) {
+                    ctrl_safety_shutdown = ctrl_ERROR_HALL_CHANGE;
+                    ESP_LOGE(TAG_CTRL, "ERROR: TOO MANY HALL SEQUENCE FAILURES (%d). CHECK WIRING AND RESTART", ctrl_skipped_commutations);
                     
 
                 //Ensure the battery is neither overvoltage nor undervoltage
@@ -647,14 +639,14 @@ void ctrl_operational_task(void *arg) {
                     
 
                 //Ensure total current and phase currents have not exceeded safety thresholds
-                //} else if ((ctrl_curA + ctrl_curB + ctrl_curC) > ctrl_TOTAL_OVERCURRENT_THRESHOLD_A) {
-                //    ctrl_safety_shutdown = ctrl_ERROR_BAT_CURRENT;
-                //    ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERCURRENT (%f). PHASE CURRENTS WERE: %f\t%f\t%f)", (ctrl_curA + ctrl_curB + ctrl_curC), ctrl_curA, ctrl_curB, ctrl_curC);
+                } else if ((ctrl_curA + ctrl_curB + ctrl_curC) > ctrl_TOTAL_OVERCURRENT_THRESHOLD_A) {
+                    ctrl_safety_shutdown = ctrl_ERROR_BAT_CURRENT;
+                    ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERCURRENT (%f). PHASE CURRENTS WERE: %f\t%f\t%f)", (ctrl_curA + ctrl_curB + ctrl_curC), ctrl_curA, ctrl_curB, ctrl_curC);
                     
 
-                //} else if ((ctrl_curA > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curB > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curC > ctrl_OVERCURRENT_THRESHOLD_A)) {
-                //    ctrl_safety_shutdown = ctrl_ERROR_PHASE_CURRENT;
-                //    ESP_LOGE(TAG_CTRL, "ERROR: PHASE OVERCURRENT (%f\t%f\t%f)", ctrl_curA, ctrl_curB, ctrl_curC);
+                } else if ((ctrl_curA > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curB > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curC > ctrl_OVERCURRENT_THRESHOLD_A)) {
+                    ctrl_safety_shutdown = ctrl_ERROR_PHASE_CURRENT;
+                    ESP_LOGE(TAG_CTRL, "ERROR: PHASE OVERCURRENT (%f\t%f\t%f)", ctrl_curA, ctrl_curB, ctrl_curC);
                     
                 
                 //Ensure heat sink temperature has not exceeded safety threshold
@@ -726,9 +718,6 @@ void ctrl_operational_task(void *arg) {
             }
             itf_displayHex(ctrl_safety_shutdown);   //lastly, update the hex display
             ctrl_set_MSFTOutput(ctrl_cur_output_index); //This can ensure that throttle updates change the duty cycle of the output MOSFETS - especially when the motor is not turning (yet)
-            ESP_LOGI(TAG_CTRL, "%d", ctrl_throttle);
-            //ESP_LOGI(TAG_CTRL, "%d", ctrl_setThrottle(0));
-            //ctrl_alignOutputToHall();
         } //END if(update_timer_alarmed)
     }
 }
@@ -756,7 +745,17 @@ static void ctrl_hall_isr(void *args)
     ctrl_getHallState();
 
     //Check for skipped commutations
-    if(ctrl_hall_state != ctrl_expected_hall_state) { ctrl_skipped_commutations++; }
+    if(!(ctrl_hall_state == ctrl_expected_hall_state)) { 
+        ctrl_skipped_commutations++; 
+        //Anytime there is a skipped commutation, reset the consecutive good commutations value
+        ctrl_consecutive_good_commutations = 0; 
+    } else { 
+        ctrl_consecutive_good_commutations++; 
+        //Anytime consecutive good commutations exceeds some number, wipe away all the accumulated errors
+        if (ctrl_consecutive_good_commutations > 500) {
+            ctrl_skipped_commutations = 0;
+        }
+    }
 
     //Update output to match hall input
     ctrl_alignOutputToHall();

@@ -109,6 +109,7 @@ void continuous_adc_results_task(void *arg) {
                         proc_voltage = (3.3333/4095)*(float)raw_voltage; //Example of processing a raw value into a float
                         ctrl_setBatVolts((proc_voltage*270.0)/15.0);
                         */
+                        ctrl_setBatVolts(((float)p->type2.data)*0.014652);
 
                     }else if (p->type2.channel == 6) {
                        int throttle = p->type2.data;  ////GPIO17  used for Speed control 
