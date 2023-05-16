@@ -18,16 +18,14 @@
 #include "itf_sd_card_setup.h"
 #include "continuous_read_adc.h"
 
-//#ifndef CTRL_SUBSYSTEM_H_
-//#include "ctrl_subsystem.h"
-//#endif
-
 #define SD_PRINTS_DEF 1
 #define SD_WRITE_PRINTS_DEF 1
 #define COM_PRINT_DEF 1
 //#define TEST_SD_WRITE_DEF 1
 
 
+//Comment out this line when NOT testing
+//#define _CTRL_SYSTEM_TEST_
 
 
 void app_main(void)
@@ -40,4 +38,7 @@ void app_main(void)
     xTaskCreate(PCComTask,"PCTask",1024*20,NULL,configMAX_PRIORITIES-1,NULL);
     xTaskCreate(MCUComTask,"MCUTask",1024*20,NULL,configMAX_PRIORITIES,NULL);
     xTaskCreatePinnedToCore(itf_writeSD_task,"SDTask",1024*50,NULL,configMAX_PRIORITIES-2,NULL,0);
+    
+    //vTaskDelay(10);
+    //ctrl_setSpeedControl(22.0);
 }

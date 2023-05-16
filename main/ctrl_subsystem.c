@@ -80,9 +80,9 @@ static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any 
 #define ctrl_ERROR_NONZERO_START_THROTTLE 0x08
 
 //Safety thresholds (exceeding these will cause one of the error codes above)
-#define ctrl_UNDERVOLTAGE_THRESHOLD_V      38.0
+#define ctrl_UNDERVOLTAGE_THRESHOLD_V      0.0
 #define ctrl_OVERVOLTAGE_THRESHOLD_V       60.0
-#define ctrl_OVERCURRENT_THRESHOLD_A       35.0
+#define ctrl_OVERCURRENT_THRESHOLD_A       1000.0
 #define ctrl_TOTAL_OVERCURRENT_THRESHOLD_A ctrl_OVERCURRENT_THRESHOLD_A*2.0
 #define ctrl_OVERTEMP_THRESHOLD_F          212.0
 #define ctrl_SKIPPED_COMMUTATIONS_ERROR_THRESHOLD   200
@@ -356,7 +356,7 @@ void init_control_subsystem(void) {
                                                     //Set to false after the direction changes to 0b00 or 0b11
         ctrl_speed_control_duty_raw = 2047;            //2047 = 50%
         ctrl_speedSetting_mph = 22.0;                  //Set to non-zero (and between the min and max thresholds (10-55 mph at time of writing)) to activate speed control.
-        ctrl_usingSpeedControl = false;                   
+        ctrl_usingSpeedControl = true;                   
         ctrl_throttle = 2047;                       //Throttle value can be from 0 to 4096. Must be 0 on startup, or motor will not be allowed to start.     
         
         #ifdef _CTRL_ITF_SYSTEM_TEST_
