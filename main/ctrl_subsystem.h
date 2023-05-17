@@ -44,6 +44,7 @@ bool  ctrl_isInSafetyShutdown(void);   //If safety shutdown is anything except 0
 uint8_t ctrl_getErrorCode(void);           //The value of safety_shutdown IS the error code
 uint64_t ctrl_getTime(void);
 int ctrl_getDirection(void);
+bool ctrl_getMCUControlStatus(void);
 
 //******************************* SET functions (Return 0 on **SUCCESS**)
 uint8_t ctrl_setSpeedControl(float target_mph);
@@ -61,6 +62,9 @@ uint8_t ctrl_setTempC(double new_temp);
 uint8_t ctrl_setCurA(double new_cur);
 uint8_t ctrl_setCurB(double new_cur);
 uint8_t ctrl_setCurC(double new_cur);
+
+
+uint8_t ctrl_setMCUControl(bool UsingMCUTrueFalse);
 
 //******************************************************     PROTOTYPES    ******************************************************
 //SETS UP AND RUNS ALL CONTROL SUSTEM CODE

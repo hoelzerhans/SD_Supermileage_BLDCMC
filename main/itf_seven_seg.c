@@ -3,22 +3,20 @@
 #include "driver/gpio.h"
 #include "itf_seven_seg.h"
 
-#ifndef ITF_HEX_DEFINES
-    #define ITF_A_PIN 40 //WAS 7
-    #define ITF_B_PIN 39 //WAS 15
-    #define ITF_C_PIN 38 //WAS 16
-    #define ITF_D_PIN 37
-    #define ITF_E_PIN 36
-    #define ITF_F_PIN 42
-    #define ITF_G_PIN 41
-#endif
+#define ITF_A_PIN 40
+#define ITF_B_PIN 39
+#define ITF_C_PIN 36
+#define ITF_D_PIN 37
+#define ITF_E_PIN 38
+#define ITF_F_PIN 42
+#define ITF_G_PIN 41
 
 void itf_displayHex(int num);
 void itf_initHex(void);
 
 //Sets up all the pinouts based on defines in the file
 void itf_initHex(void){
-    static const int segPinArray[] = {ITF_A_PIN,ITF_B_PIN,ITF_C_PIN,ITF_D_PIN,ITF_E_PIN,ITF_F_PIN,ITF_G_PIN};
+    static const int segPinArray[] = {ITF_A_PIN, ITF_B_PIN, ITF_C_PIN, ITF_D_PIN, ITF_E_PIN, ITF_F_PIN, ITF_G_PIN};
     int p=0;
     for(p=0;p<7;p++){
         int gpioNum = segPinArray[p];

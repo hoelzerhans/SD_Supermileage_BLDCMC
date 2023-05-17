@@ -24,15 +24,4 @@
 #define ITF_SD_CS_PIN    0
 #define ITF_SD_BUFFER_SIZE ITF_SD_WRITE_SIZE*20
 
-//SD card wrting defines
-#define ITF_HEX_DEFINES 1
-
-#define ITF_A_PIN 40 //WAS 7
-#define ITF_B_PIN 39 //WAS 15
-#define ITF_C_PIN 36 //WAS 38
-#define ITF_D_PIN 37
-#define ITF_E_PIN 38
-#define ITF_F_PIN 42
-#define ITF_G_PIN 41
-
 #endif

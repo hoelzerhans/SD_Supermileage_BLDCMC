@@ -33,7 +33,7 @@ static const int ITF_TX_BUF_SIZE_UART1 = 1024;
 
 int itf_dirInput0 = -1;
 int itf_dirInput1 = -1;
-int itf_speedLocked = 1;    //CALEB: Could you tell me more about this variable at some point?
+int itf_speedLocked = 1;
 
 
 int itf_decodePC(uint8_t* str);
@@ -199,6 +199,7 @@ int itf_actOnMessage(int message,int source){
                 ESP_LOGI("Response","Software Throttle is locked");
             }
             break;
+            
         case 1: //Speed set mph
             //set speed mph
             float mphCalc = 10.0+0.17647*((float)(packetDATA));
@@ -211,6 +212,7 @@ int itf_actOnMessage(int message,int source){
                 ESP_LOGI("Response","Software Speed set is locked");
             }
             break;
+
         case 2: //Enable/disable speed set SOFTWARE SPEED CONTROL
             //Lock/Unlock
             itf_speedLocked = (packetDATA > 0);//1 = locked, 0 = unlocked
@@ -221,6 +223,7 @@ int itf_actOnMessage(int message,int source){
             }
             ESP_LOGI("Response","Set speedLock to %d PS: 0 means SOFTWARE control, 1 means ADC control",itf_speedLocked);
             break;
+
         case 3: //Dir set & dir lock
             //unlock/lock and set dir
             //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
@@ -229,6 +232,7 @@ int itf_actOnMessage(int message,int source){
                 ESP_LOGI("Response","Set Dir to %d",packetDATA);
             }
             break;
+
         case 4: //Req temp
             int tempWanted = packetDATA & (0x03);//ABC
             int temp_DUMMY = 0;
@@ -251,6 +255,7 @@ int itf_actOnMessage(int message,int source){
                 ESP_LOGI(c,"Temp = %d",temp_DUMMY);
             }
             break;
+
         case 5://Req MPH
             int MPH_encoded = (int) ctrl_getSpeed_mph();
             if(source == 0){
@@ -262,6 +267,7 @@ int itf_actOnMessage(int message,int source){
             }
             //Stuff
             break;
+
         case 6://Req CurrA
             int CurrA_encoded = (int) ctrl_getCurrent_A();
             if(source == 0){
@@ -272,6 +278,7 @@ int itf_actOnMessage(int message,int source){
             }
             //Stuff
             break;
+
         case 7://Req BatVol
             int BattV_encoded = (int) ctrl_getBatVolts_V();
             if(source == 0){
@@ -282,11 +289,22 @@ int itf_actOnMessage(int message,int source){
             }
             //Stuff
             break;
-        //CALEB: ADDED CASE 8, please check
+
         case 8://deactivate speed control
             ctrl_turnOffSpeedControl();
             ESP_LOGI(c,"Speed Control Deactivated.");
             break;
+
+        case 9://Set MCU control of throttle
+            ctrl_setMCUControl(true);
+            ESP_LOGI(c,"MCU has been granted exclusive throttle control.");
+            break;
+
+        case 10://Unset MCU control of throttle
+            ctrl_setMCUControl(false);
+            ESP_LOGI(c,"MCU throttle control revoked.");
+            break;
+
         case 14://Read Direction request (TEST MSG, DONT USE IN ACTUAL)
             if(source == 0){
                 itf_writeTestMessage("Dir Test Performed via MCU \n");
@@ -360,14 +378,19 @@ void itf_initDirPins(void){
 }
 
 void itf_dirHandler(void *arg){
-    itf_dirInput0 = gpio_get_level(ITF_DIR0_PIN);
-    itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
-    //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
-    ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
+    //Only change direction pin info if MCU control has not been delegated
+    if(ctrl_getMCUControlStatus()) {
+        //Do nothing
+    } else {
+        itf_dirInput0 = gpio_get_level(ITF_DIR0_PIN);
+        itf_dirInput1 = gpio_get_level(ITF_DIR1_PIN);
+        //00 = NOT RUNNING, 01 = FORWARD, 10 = BACKWARD, 11 = NOT RUNNING
+        ctrl_setDirection((itf_dirInput0<<1) | itf_dirInput1);
 
-    //#ifdef COM_PRINT_DEF
-    //ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
-    //#endif
+        //#ifdef COM_PRINT_DEF
+        //ESP_LOGI("itf_dirHandler","Dir0 = %d, Dir1 = %d",itf_dirInput0,itf_dirInput1);
+        //#endif
+    }
     return;
 }
 
@@ -415,13 +438,13 @@ void MCUComTask(void * params){
         int length;
         uart_get_buffered_data_len(UART_NUM_1,(size_t*) &length);
         
-        uint8_t* data = (uint8_t*) malloc(2);
-        const int rxBytes = uart_read_bytes(UART_NUM_1, data, 2, 1000 / portTICK_PERIOD_MS);
+        uint8_t* data = (uint8_t*) malloc(5);
+        const int rxBytes = uart_read_bytes(UART_NUM_1, data, 5, 1000 / portTICK_PERIOD_MS);
         if (rxBytes > 0) {
             data[rxBytes] = 0;
-            ESP_LOGI("MCU", "Read %d bytes: '%x''%x'", rxBytes, data[0],data[1]);
+            ESP_LOGI("MCU", "Read %d bytes: '%x''%x''%x''%x'", rxBytes, data[0],data[1],data[2],data[3]);
             
-            int messageVal = (data[0]<<8) | (data[1]);
+            int messageVal = ((data[0]<<32) | (data[1] << 24) | (data[2]<<8) | data[3]);
             ESP_LOGI("MCU","Decoded message %x",messageVal);
             if(itf_checkCRC(messageVal) != -1){
                 itf_actOnMessage(messageVal,0);

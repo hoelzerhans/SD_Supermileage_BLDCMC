@@ -14,7 +14,8 @@
 
 
 
-
+#define CTRL_MOTOR_FWD_STEPS 2  //1 for big motor 2 for small motor.
+#define CTRL_MOTOR_RVS_STEPS 1  //2 for big motor. 1 for small motor.
 
 //Comment out this line when NOT testing
 //#define _CTRL_SYSTEM_TEST_
@@ -22,7 +23,7 @@
 //Needs above initailized aswell
 //#define _CTRL_ITF_SYSTEM_TEST_
 
-#define CTRL_THROTTLE_DEADZONE_BOTTOM 700   //The throttle ADC value below which the throttle is forced to zero
+#define CTRL_THROTTLE_DEADZONE_BOTTOM 400   //The throttle ADC value below which the throttle is forced to zero
 
 //******************************************************     GENERAL     ******************************************************
 static const char *TAG_CTRL = "CTRL";       //Classification tag applied to any outgoing serial communication messages from this subsystem.
@@ -165,7 +166,7 @@ const uint8_t ctrl_change_table[6][4] = {
 
 //******************************************************     VARIABLES/GETTERS/SETTERS    ******************************************************
 //Processed sensor values
-double ctrl_batVolt = 0;
+double ctrl_batVolt = 35;
 double ctrl_totCur = 0;
 double ctrl_curA = 0;
 double ctrl_curB = 0;
@@ -201,6 +202,7 @@ uint32_t ctrl_runTime = 0.0;        //Total motor running time in milliseconds
 
 //Important internal variables
 bool ctrl_usingSpeedControl = false;
+bool ctrl_MCUControlled = false;
 uint32_t ctrl_commutation_counter = 0;
 uint64_t ctrl_commutation_timestamps[3] = {0,0,0};
 
@@ -221,6 +223,7 @@ double ctrl_getPhaseTempC_f(void)        { return ctrl_tempC; }
 double ctrl_getSpeedSetting_mph(void)    { return ctrl_speedSetting_mph; }           //Speed may be controlled between 10.0 and 55.0 mph
 double ctrl_getThrottle(void)            { return ctrl_throttle; }                   //Throttle may be from 0 to 4096 (0% to 100%)
 int ctrl_getDirection(void)              { return ctrl_direction_command; }
+bool ctrl_getMCUControlStatus(void)      { return ctrl_MCUControlled; }
 
 
 bool  ctrl_isArmed(void)                { return ctrl_mc_armed; }
@@ -310,6 +313,11 @@ uint8_t ctrl_setDirection(uint8_t new_direction) {
     return 0;    //Success
 }
 
+
+uint8_t ctrl_setMCUControl(bool UsingMCUTrueFalse) {
+    ctrl_MCUControlled = UsingMCUTrueFalse;
+    return 0;    //Success
+}
 
 
 
@@ -517,6 +525,7 @@ void ctrl_set_MSFTOutput(uint8_t output_table_index_to_use) {
 }
 
 
+
 /* ctrl_alignOutputToHall() aligns the cur_input_index, cur_output_index, and expected_hall_state to 
  * match to the most recently read hall_state (also takes direction into account for the expected_hall_state)
 */
@@ -530,13 +539,13 @@ void ctrl_alignOutputToHall(void) {
         //Adjust the commutation table index based on which way we want to turn
         //ALSO: Handle wrap around of the cur_table_index
         if (ctrl_direction_command == 0x01) {
-            ctrl_cur_output_index = ctrl_cur_input_index + 2;
+            ctrl_cur_output_index = ctrl_cur_input_index + CTRL_MOTOR_FWD_STEPS;
             if (ctrl_cur_output_index > 5) { ctrl_cur_output_index -= 6; }
             //Determine what the next hall state should look like
             uint8_t next_index = i+1; if (next_index > 5) {next_index = 0;}
             ctrl_expected_hall_state = ctrl_hall_input_table[next_index];
         } else if (ctrl_direction_command == 0x02) {
-            ctrl_cur_output_index = ctrl_cur_input_index - 1;
+            ctrl_cur_output_index = ctrl_cur_input_index - CTRL_MOTOR_RVS_STEPS;
             if (ctrl_cur_output_index > 5) { ctrl_cur_output_index += 6; } //Note that since cur_table_index is a uint, if it goes "below 0" it becomes 255
             //Determine what the next hall state should look like
             uint8_t next_index = i-1; if (next_index > 5) {next_index = 5;}
@@ -632,7 +641,6 @@ void ctrl_operational_task(void *arg) {
                 } else if (ctrl_batVolt < ctrl_UNDERVOLTAGE_THRESHOLD_V) {
                     ctrl_safety_shutdown = ctrl_ERROR_BAT_UNDERVOLT;
                     ESP_LOGE(TAG_CTRL, "ERROR: BATTERY UNDERVOLTAGE (%f)", ctrl_batVolt);
-                    
                 } else if (ctrl_batVolt > ctrl_OVERVOLTAGE_THRESHOLD_V) {
                     ctrl_safety_shutdown = ctrl_ERROR_BAT_OVERVOLT;
                     ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERVOLTAGE (%f)", ctrl_batVolt);
@@ -642,8 +650,6 @@ void ctrl_operational_task(void *arg) {
                 } else if ((ctrl_curA + ctrl_curB + ctrl_curC) > ctrl_TOTAL_OVERCURRENT_THRESHOLD_A) {
                     ctrl_safety_shutdown = ctrl_ERROR_BAT_CURRENT;
                     ESP_LOGE(TAG_CTRL, "ERROR: BATTERY OVERCURRENT (%f). PHASE CURRENTS WERE: %f\t%f\t%f)", (ctrl_curA + ctrl_curB + ctrl_curC), ctrl_curA, ctrl_curB, ctrl_curC);
-                    
-
                 } else if ((ctrl_curA > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curB > ctrl_OVERCURRENT_THRESHOLD_A) || (ctrl_curC > ctrl_OVERCURRENT_THRESHOLD_A)) {
                     ctrl_safety_shutdown = ctrl_ERROR_PHASE_CURRENT;
                     ESP_LOGE(TAG_CTRL, "ERROR: PHASE OVERCURRENT (%f\t%f\t%f)", ctrl_curA, ctrl_curB, ctrl_curC);
